@@ -143,7 +143,10 @@ export default function SettingsPage() {
             界面、步骤与检查项三端一致。
           </dd>
         </dl>
-        <p className="muted">SSH 主机配置将在下一里程碑接入；当前 apk 未配置后端时只显示实验步骤。</p>
+        <p className="muted">
+          v0.1.0 的 Android 端尚未接入 SSH 实验后端，实验区只显示步骤与检查项（只读模式），不会伪造执行结果。
+          需要实际运行实验时请使用 Windows / Linux 桌面端；SSH 配置能力见仓库路线图。
+        </p>
       </section>
 
       <section className="card">

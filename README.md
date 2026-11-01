@@ -13,7 +13,7 @@
 |---|---|---|
 | Windows 10/11 | NSIS 安装包 `.exe` | WSL2（`wsl.exe`）；不可用时明确显示只读模式 |
 | Linux x86_64 / arm64 | Debian 安装包 `.deb` | 本机 Shell；声明了 `image` 的实验走 Docker |
-| Android 8+（arm64） | 签名 `.apk` | 未配置后端时只读模式；SSH 通道预留 |
+| Android 8+（arm64） | 签名 `.apk` | 未接入 SSH；无后端时只读展示实验步骤与检查项 |
 
 实验每个命令独立执行，结果实时回传；没有可用后端时返回 `no-backend` 或 `failed`，**不会伪造实验成功**。硬件、ROS、Docker 相关步骤若未在对应环境实测，课程中会标注「⚠ 未实测」。
 
