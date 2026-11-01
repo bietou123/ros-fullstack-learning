@@ -34,7 +34,7 @@ pnpm dev            # 浏览器开发模式
 |---|---|
 | `pnpm typecheck` | 核心包与前端类型检查 |
 | `pnpm test` | 核心库单元测试（Node 内置 test runner） |
-| `pnpm verify` | 内容包哈希、课程结构、覆盖率、敏感信息扫描 |
+| `pnpm verify` | 内容包哈希、课程结构、覆盖率、敏感信息扫描；首次运行会自动生成内容包 |
 | `pnpm verify --full` | 追加类型检查、单测和前端构建 |
 | `pnpm package:exe` | 构建 Windows NSIS 安装包 |
 | `pnpm package:deb` | 构建 Linux deb（需 Linux/WSL，含 x64/arm64） |

@@ -59,6 +59,15 @@ function canonicalManifest(base) {
 const packPath = path.join(root, 'apps/web/public/content/pack.json')
 const infoPath = path.join(root, 'apps/web/public/content/build-info.json')
 
+if (!fs.existsSync(packPath)) {
+  console.log('内容包缺失，自动执行 build:content …')
+  const r = spawnSync(process.execPath, [path.join(root, 'scripts/build-pack.mjs')], { cwd: root, encoding: 'utf8' })
+  if (r.status !== 0) {
+    console.error(((r.stdout || '') + (r.stderr || '')).trim())
+    process.exit(1)
+  }
+}
+
 check('内容包存在', () => {
   if (!fs.existsSync(packPath)) throw new Error('缺少 apps/web/public/content/pack.json，先运行 pnpm build:content')
   return 'ok'
