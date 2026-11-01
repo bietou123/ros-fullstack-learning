@@ -1,0 +1,43 @@
+id: "S4-06"
+stage: "s4"
+title: "100Hz 控制环与实时性"
+durationMin: 40
+type: "teach"
+output: "抖动测量"
+tags: ["实时性", "抖动"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s4-06-jitter"
+  ros: "none"
+  commands:
+    - "python3 -c \"import time; d=[time.sleep(0.01) or time.perf_counter() for _ in range(200)]; g=sorted(b-a for a,b in zip(d,d[1:])); print('mean_ms=%.3f'%(sum(g)/len(g)*1000)); print('p99_ms=%.3f'%(g[int(len(g)*0.99)]*1000)); print('max_ms=%.3f'%(g[-1]*1000))\""
+    - "python3 -c \"import time; d=[]; t=time.perf_counter(); [(t:=t+0.01, time.sleep(max(0,t-time.perf_counter())), d.append(time.perf_counter())) for _ in range(200)]; g=sorted(b-a for a,b in zip(d,d[1:])); print('mean_ms=%.3f'%(sum(g)/len(g)*1000)); print('p99_ms=%.3f'%(g[int(len(g)*0.99)]*1000)); print('max_ms=%.3f'%(g[-1]*1000))\""
+  checks:
+    - "python3 -c \"import time; t=time.perf_counter(); time.sleep(0.05); assert time.perf_counter()-t>=0.05\""
+  timeoutSec: 120
+  headless: true
+quiz:
+  - q: "评价控制环实时性，最该看哪个指标？"
+    options:
+      - "平均周期"
+      - "P99 与最坏延迟"
+      - "CPU 占用"
+      - "线程数量"
+    answer: 1
+    explain: "平均好看但偶发迟到，仍然会导致动作抖动。"
+  - q: "控制循环里每次 `print` 日志的后果是？"
+    options:
+      - "没有影响"
+      - "I/O 可能阻塞，引入抖动尖峰"
+      - "提高实时性"
+      - "自动缓冲"
+    answer: 1
+    explain: "循环内避免 I/O 是实时编程的基本要求。"
+  - q: "测量控制周期应该用哪个时钟？"
+    options:
+      - "墙上时钟"
+      - "单调时钟 perf_counter/monotonic"
+      - "系统时间字符串"
+      - "传感器时间"
+    answer: 1
+    explain: "单调时钟不会因校时跳变，适合测间隔。"

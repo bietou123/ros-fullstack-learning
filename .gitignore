@@ -1,0 +1,34 @@
+node_modules/
+dist/
+.wrangler/
+*.log
+.DS_Store
+Thumbs.db
+
+# 私有内容包永不入库
+content/private/
+content/packs/private/
+*.private.pack.json
+*.private.zip
+
+# 签名材料
+.signing/
+*.keystore
+*.jks
+*.p12
+keystore.properties
+
+# 构建中间产物
+apps/desktop/web/
+apps/desktop/dist/
+apps/mobile/ios/
+apps/web/public/content/
+docs/coverage-summary.json
+release/
+.tmp-verify/
+
+# 冒烟测试证据（本机生成）
+apps/desktop/smoke*/
+apps/desktop/smoke-*.log
+apps/desktop/smoke-*.err
+*.tsbuildinfo

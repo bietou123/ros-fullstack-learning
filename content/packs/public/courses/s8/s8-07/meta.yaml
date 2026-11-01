@@ -1,0 +1,42 @@
+id: "S8-07"
+stage: "s8"
+title: "现场开机流程 SOP"
+durationMin: 30
+type: "field"
+output: "SOP 卡"
+tags: ["SOP", "开机", "现场"]
+sources: ["05_交付实施SOP", "03-安全设计与状态机.md", "C_现场踩坑"]
+experiment:
+  id: "s8-07-boot-sop"
+  ros: "none"
+  commands:
+    - "python3 -c \"import json; card={'version':'2.1','steps':['estop_check','power_on','sensors','network','control','hmi'],'time_budget_min':10,'abort_on_fail':True}; req=['version','steps','time_budget_min','abort_on_fail']; miss=[k for k in req if k not in card]; print('steps=%d first=%s abort=%s miss=%s'%(len(card['steps']),card['steps'][0],card['abort_on_fail'],miss))\""
+  checks:
+    - "python3 -c \"import json; card={'version':'2.1','steps':['estop_check','power_on','sensors','network','control','hmi'],'time_budget_min':10,'abort_on_fail':True}; req=['version','steps','time_budget_min','abort_on_fail']; miss=[k for k in req if k not in card]; assert card['steps'][0]=='estop_check' and card['abort_on_fail'] and not miss; print('SOP_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "开机流程的第一步应该是？"
+    options:
+      - "急停与安全回路自检"
+      - "打开人机界面"
+      - "启动控制节点"
+      - "连接远程桌面"
+    answer: 0
+    explain: "安全先于功能；安全回路未就绪，后续任何启动都没有意义。"
+  - q: "关机顺序通常应该？"
+    options:
+      - "与开机顺序相反"
+      - "与开机顺序相同"
+      - "直接断电"
+      - "只关显示器"
+    answer: 0
+    explain: "先停上层功能、再断底层动力，避免状态残留与数据损坏。"
+  - q: "开机自检出现 FAIL 时，正确的做法是？"
+    options:
+      - "禁止进入工作模式，先排查"
+      - "先干着，边用边查"
+      - "忽略，明天再看"
+      - "把自检脚本关掉"
+    answer: 0
+    explain: "自检失败意味着安全或功能前提不成立，带病运行是最危险的选择。"

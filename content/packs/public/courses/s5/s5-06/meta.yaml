@@ -1,0 +1,51 @@
+id: "S5-06"
+stage: "s5"
+title: "20 点触地法与误差判据"
+durationMin: 40
+type: "teach"
+output: "误差分析报告"
+tags: ["触地法", "误差分析", "验收"]
+sources: ["基础尺寸标定使用手册.pdf", "挖掘机-传感器标定统一操作手册.docx", "C_现场踩坑"]
+experiment:
+  id: "s5-06-touch-error"
+  ros: "none"
+  commands:
+    - "python3 -c \"import random,math; random.seed(11); z=[random.gauss(0,0.005) for _ in range(20)]; print('rms=%.4f max=%.4f'%(math.sqrt(sum(v*v for v in z)/20),max(abs(v) for v in z)))\""
+    - "python3 -c \"import random,math; random.seed(11); xs=[random.uniform(-3,3) for _ in range(20)]; z=[0.01*x+random.gauss(0,0.005) for x in xs]; m=sum(z)/20; print('mean_err_cm=%.2f max_err_cm=%.2f within2cm=%d/20'%(abs(m)*100,max(abs(v) for v in z)*100,sum(1 for v in z if abs(v)<=0.02)))\""
+  checks:
+    - "python3 -c \"import random,math; random.seed(11); xs=[random.uniform(-3,3) for _ in range(20)]; z=[0.01*x+random.gauss(0,0.005) for x in xs]; m=sum(z)/20; assert abs(m)<0.01 and max(abs(v) for v in z)>0.02\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "误差报告只写「平均误差 8 mm」的主要问题是？"
+    options:
+      - "平均值会掩盖局部超差"
+      - "单位不够直观"
+      - "平均误差无法计算"
+      - "没有影响"
+    answer: 0
+    explain: "少数大误差被平均掉，现场最坏点可能远超阈值。"
+  - q: "20 个触地点最合理的布置是？"
+    options:
+      - "覆盖近/中/远与左/中/右区域"
+      - "全部集中在斗齿正前方 1 m"
+      - "随机撒点即可"
+      - "只在最大臂展处取点"
+    answer: 0
+    explain: "覆盖工作空间才能暴露系统性偏差。"
+  - q: "验收判据应该在什么时候确定？"
+    options:
+      - "采集数据之前"
+      - "看到结果之后"
+      - "和客户谈价时"
+      - "标定失败之后"
+    answer: 0
+    explain: "事后定判据容易变成挑数据凑合格。"
+  - q: "触地误差随距离线性增大，最可能的原因是？"
+    options:
+      - "连杆长度或尺度误差"
+      - "随机噪声"
+      - "时间戳错误"
+      - "网络延迟"
+    answer: 0
+    explain: "与距离成比例的误差通常指向长度/尺度，而不是噪声。"

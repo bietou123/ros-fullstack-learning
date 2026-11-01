@@ -1,0 +1,46 @@
+id: "S3-06"
+stage: "s3"
+title: "挖机关节链 URDF 实战"
+durationMin: 45
+type: "teach"
+output: "可动挖机模型"
+tags: ["URDF", "实战"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s3-06-chain"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -E \"robot_state_publisher|joint_state_publisher\" | head -n 5'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v check_urdf && command -v xacro'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q robot_state_publisher'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v xacro'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "关节方向反了，正确的修法是？"
+    options:
+      - "在控制代码里乘 -1"
+      - "修改 URDF 中该 joint 的 axis 符号"
+      - "改话题名"
+      - "降低频率"
+    answer: 1
+    explain: "在模型层修正，避免错误扩散到算法层。"
+  - q: "监视界面模型不动，最先查？"
+    options:
+      - "显卡驱动"
+      - "joint_states 是否在发、关节名是否与 URDF 一致"
+      - "网络带宽"
+      - "重装系统"
+    answer: 1
+    explain: "名字不匹配会被静默忽略。"
+  - q: "传感器安装外参在 URDF 中应？"
+    options:
+      - "随意写"
+      - "先写标称值，标定后回填更新"
+      - "不写"
+      - "写在话题名里"
+    answer: 1
+    explain: "模型需与标定结果保持一致。"

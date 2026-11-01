@@ -1,0 +1,53 @@
+id: "S0-05"
+stage: "s0"
+title: "Git：分支、回滚与现场版本管理"
+durationMin: 35
+type: "teach"
+output: "冲突解决演练"
+tags: ["Git", "版本控制"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s0-05-git"
+  ros: "none"
+  commands:
+    - "rm -rf /tmp/rl-s05 && mkdir -p /tmp/rl-s05 && cd /tmp/rl-s05 && git init -q && git config user.email learner@example.com && git config user.name learner && echo 'speed=1.0' > params.txt && git add params.txt && git commit -qm 'init params' && git switch -c tune-speed && echo 'speed=1.2' > params.txt && git commit -qam 'tune speed to 1.2' && git switch - && git merge --no-edit tune-speed && git log --oneline --graph --all | head -n 5"
+    - "cd /tmp/rl-s05 && git reset --hard HEAD~1 -q && cat params.txt"
+  checks:
+    - "test -d /tmp/rl-s05/.git"
+    - "git -C /tmp/rl-s05 log --oneline | grep -q 'init params'"
+    - "test \"$(cat /tmp/rl-s05/params.txt)\" = \"speed=1.0\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "已经推送到远端、别人可能已经拉取的提交，回滚应该用哪个命令？"
+    options:
+      - "git reset --hard"
+      - "git revert <commit>"
+      - "git clean -fdx"
+      - "删除 .git 目录"
+    answer: 1
+    explain: "revert 生成反向提交，不改写公共历史。"
+  - q: "`git reset --soft HEAD~1` 的效果是？"
+    options:
+      - "撤销提交，改动仍在暂存区"
+      - "丢弃所有改动"
+      - "删除最近一次合并"
+      - "推送到远端"
+    answer: 0
+    explain: "soft 只移动 HEAD，暂存区和工作区保留。"
+  - q: "合并冲突时，文件中的 `<<<<<<<` 标记表示？"
+    options:
+      - "Git 语法错误"
+      - "冲突起始，后面分别是当前分支与其他分支内容"
+      - "文件已损坏"
+      - "需要重新 clone"
+    answer: 1
+    explain: "按标记人工选择并删除标记，再 add/commit。"
+  - q: "现场标定数据为什么通常不放进代码仓库？"
+    options:
+      - "Git 不支持二进制"
+      - "体积大且可能含现场敏感信息，应单独备份并记录版本"
+      - "标定数据必须加密才能读"
+      - "放进去会导致编译失败"
+    answer: 1
+    explain: "分开管理，避免误发布和仓库膨胀。"

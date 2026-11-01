@@ -1,0 +1,42 @@
+id: "S9-01"
+stage: "s9"
+title: "远控全链路复盘"
+durationMin: 40
+type: "teach"
+output: "全链路时序图"
+tags: ["远控", "时延", "复盘"]
+sources: ["02_架构与协议", "06_软件部署与运维", "C_现场踩坑"]
+experiment:
+  id: "s9-01-latency-chain"
+  ros: "none"
+  commands:
+    - "python3 -c \"chain=[('joystick',8),('uplink',25),('ctrl_loop',10),('servo',30)]; total=sum(t for _,t in chain); v=2.0; print('total_ms=%d lag_cm=%.1f'%(total,total/1000*v*100))\""
+  checks:
+    - "python3 -c \"chain=[('joystick',8),('uplink',25),('ctrl_loop',10),('servo',30)]; total=sum(t for _,t in chain); lag=total/1000*2.0*100; assert total==73 and abs(lag-14.6)<0.1; print('LATENCY_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "总时延 73 ms、作业速度 2 m/s 时，跟随误差下限约为？"
+    options:
+      - "14.6 cm"
+      - "1.5 cm"
+      - "73 cm"
+      - "与速度无关"
+    answer: 0
+    explain: "73 ms × 2 m/s = 0.146 m，即 14.6 cm。"
+  - q: "评估远控体感时，只看平均时延的问题在于？"
+    options:
+      - "均值掩盖抖动，P95/P99 才决定操作感受"
+      - "平均值无法计算"
+      - "平均值总是偏高"
+      - "没有影响"
+    answer: 0
+    explain: "偶发的大延迟会让操作员觉得忽快忽慢，均值看不出来。"
+  - q: "分段耗时出现负值，首先应该怀疑？"
+    options:
+      - "各测量点时钟不同步"
+      - "网络带宽太大"
+      - "CPU 太快"
+      - "伺服参数正确"
+    answer: 0
+    explain: "不同设备的墙钟存在偏差，必须先统一时基（S4-07）。"

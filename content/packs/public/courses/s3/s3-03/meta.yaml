@@ -1,0 +1,46 @@
+id: "S3-03"
+stage: "s3"
+title: "TF2 广播器与监听器"
+durationMin: 35
+type: "teach"
+output: "坐标查询工具"
+tags: ["TF2", "四元数"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s3-03-tf2"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 1 --frame-id base_link --child-frame-id boom_base >/dev/null 2>&1 &) && sleep 2 && timeout 5 ros2 run tf2_ros tf2_echo base_link boom_base; true'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import tf2_ros; print(\\\"tf2_ros ok\\\")\"'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q tf2_ros'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import tf2_ros\"'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "绕单轴旋转 θ 的四元数，其对应轴分量是？"
+    options:
+      - "sin(θ)"
+      - "sin(θ/2)"
+      - "cos(θ)"
+      - "tan(θ)"
+    answer: 1
+    explain: "四元数表示半角，轴分量是 sin(θ/2)，实部是 cos(θ/2)。"
+  - q: "`lookup_transform('a', 'b', t)` 得到的是？"
+    options:
+      - "a 在 b 中的位姿"
+      - "从 b 到 a 的变换（把 b 系下的坐标转换到 a 系）"
+      - "两个系的距离"
+      - "a 的绝对坐标"
+    answer: 1
+    explain: "参数顺序是目标系在前、源系在后，方向极易搞反。"
+  - q: "TF 查询报 `ExtrapolationException`，通常是因为？"
+    options:
+      - "框架名错"
+      - "请求时间超出缓冲区范围（太旧或太新）"
+      - "没有网络"
+      - "TF 不支持 ROS2"
+    answer: 1
+    explain: "时间戳超界是外推错误的典型含义。"

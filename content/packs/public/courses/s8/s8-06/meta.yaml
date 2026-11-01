@@ -1,0 +1,50 @@
+id: "S8-06"
+stage: "s8"
+title: "远程升级与回滚"
+durationMin: 35
+type: "teach"
+output: "回滚演练"
+tags: ["升级", "回滚", "部署"]
+sources: ["06_软件部署与运维", "E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s8-06-rollback"
+  ros: "none"
+  commands:
+    - "d=$(mktemp -d); mkdir -p $d/releases/v1 $d/releases/v2; ln -s releases/v1 $d/current; echo \"running=$(basename $(readlink -f $d/current))\"; ln -sfn releases/v2 $d/current; echo \"after_upgrade=$(basename $(readlink -f $d/current))\"; ln -sfn releases/v1 $d/current; echo \"after_rollback=$(basename $(readlink -f $d/current))\"; rm -rf $d"
+  checks:
+    - "d=$(mktemp -d); mkdir -p $d/releases/v1 $d/releases/v2; ln -s releases/v1 $d/current; ln -sfn releases/v2 $d/current; up=$(basename $(readlink -f $d/current)); ln -sfn releases/v1 $d/current; rb=$(basename $(readlink -f $d/current)); rm -rf $d; [ \"$up\" = \"v2\" ] && [ \"$rb\" = \"v1\" ] && echo ROLLBACK_OK"
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "升级完成后，最应该保留的是？"
+    options:
+      - "至少上一个可用版本（N-1），便于回滚"
+      - "不保留，节省磁盘"
+      - "只保留最新版本"
+      - "所有历史版本永久保留"
+    answer: 0
+    explain: "没有旧版本目录，就没有可退回的目标；保留策略按磁盘容量定，但 N-1 是底线。"
+  - q: "`ln -sfn` 中 `-n` 的作用是？"
+    options:
+      - "目标是已存在的符号链接时，替换链接本身而不是放进它指向的目录"
+      - "不输出任何提示"
+      - "强制覆盖普通文件"
+      - "不创建链接"
+    answer: 0
+    explain: "漏掉 -n 容易出现 current/current 这类套娃链接。"
+  - q: "回滚判据应该？"
+    options:
+      - "事先写成可测量的条件"
+      - "到现场凭感觉决定"
+      - "由客户临时拍板"
+      - "只在周末回滚"
+    answer: 0
+    explain: "判据写死，现场才敢在压力下快速做决定。"
+  - q: "数据库 schema 已迁移后回滚旧版本，最大风险是？"
+    options:
+      - "旧程序读不懂新表结构"
+      - "磁盘会变慢"
+      - "网络会断"
+      - "日志会变多"
+    answer: 0
+    explain: "schema 迁移通常单向，回滚前必须备份，并成对准备回滚脚本。"

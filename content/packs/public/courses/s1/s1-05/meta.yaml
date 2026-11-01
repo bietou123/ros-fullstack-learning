@@ -1,0 +1,45 @@
+id: "S1-05"
+stage: "s1"
+title: "service、param、launch"
+durationMin: 40
+type: "teach"
+output: "参数化启动"
+tags: ["launch", "service", "param"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s1-05-launch"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && rosparam set /rl_speed_limit 1.2 && rosparam get /rl_speed_limit && timeout 5 rosservice list | head -n 5; true'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v roslaunch rosservice rosparam'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v roslaunch'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v rosparam && command -v rosservice'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "需要「请求一次并等待结果」的通信，应该用？"
+    options:
+      - "topic"
+      - "service"
+      - "param"
+      - "rosbag"
+    answer: 1
+    explain: "service 是请求/响应模型，能确认是否成功。"
+  - q: "`rosparam set` 设置的参数，master 重启后会？"
+    options:
+      - "保留"
+      - "丢失，必须用 yaml 文件持久化"
+      - "自动备份"
+      - "变慢"
+    answer: 1
+    explain: "参数存在 master 内存里，落盘要 rosparam dump。"
+  - q: "launch 中节点日志看不到，最常见的原因是？"
+    options:
+      - "日志功能坏了"
+      - "没加 output=\"screen\""
+      - "节点没启动"
+      - "磁盘满了"
+    answer: 1
+    explain: "roslaunch 默认把节点输出写入日志文件。"

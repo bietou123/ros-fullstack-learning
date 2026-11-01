@@ -1,0 +1,42 @@
+id: "S9-03"
+stage: "s9"
+title: "激光 / IMU 配置与调参"
+durationMin: 35
+type: "teach"
+output: "配置模板"
+tags: ["激光", "IMU", "调参"]
+sources: ["04_标定与算法", "02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s9-03-sensor-tuning"
+  ros: "none"
+  commands:
+    - "python3 -c \"fs=200.0; fv=120.0; alias=abs(round(fv/fs)*fs-fv); print('imu_hz=%d lidar_hz=%d alias_hz=%d'%(fs,10,alias))\""
+  checks:
+    - "python3 -c \"fs=200.0; fv=120.0; alias=abs(round(fv/fs)*fs-fv); assert alias==80; print('TUNING_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "200 Hz 采样的 IMU 遇到 120 Hz 振动，观测到的频率是？"
+    options:
+      - "80 Hz（混叠）"
+      - "120 Hz"
+      - "200 Hz"
+      - "320 Hz"
+    answer: 0
+    explain: "120 Hz 超过 100 Hz 的奈奎斯特上限，混叠到 80 Hz。"
+  - q: "把低通滤波调得更重，会带来什么代价？"
+    options:
+      - "延迟增大"
+      - "采样率提高"
+      - "噪声变成信号"
+      - "没有任何代价"
+    answer: 0
+    explain: "平滑与延迟是对价关系，控制链路里尤其明显。"
+  - q: "发现点云抖动，第一步应该？"
+    options:
+      - "检查安装固定与时间戳/TF"
+      - "直接加大滤波"
+      - "更换传感器"
+      - "降低控制频率"
+    answer: 0
+    explain: "机械松动和坐标错位造成的抖动，滤波只能掩盖不能解决。"

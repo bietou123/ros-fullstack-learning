@@ -1,0 +1,50 @@
+id: "S10-06"
+stage: "s10"
+title: "验收报告与答辩"
+durationMin: 45
+type: "teach"
+output: "报告"
+tags: ["验收报告", "答辩", "证据"]
+sources: ["05_交付实施SOP", "03-安全设计与状态机.md", "C_现场踩坑"]
+experiment:
+  id: "s10-06-report"
+  ros: "none"
+  commands:
+    - "python3 -c \"report=[('摘要',True,0.05),('系统架构',True,0.15),('功能验收',True,0.25),('安全验收',True,0.25),('故障演练',True,0.15),('数据与证据',False,0.10),('改进项',True,0.05)]; score=sum(w for _,ok,w in report if ok); print('sections=%d score=%.2f missing=%s'%(len(report),score,[n for n,ok,_ in report if not ok]))\""
+  checks:
+    - "python3 -c \"report=[('摘要',True,0.05),('系统架构',True,0.15),('功能验收',True,0.25),('安全验收',True,0.25),('故障演练',True,0.15),('数据与证据',False,0.10),('改进项',True,0.05)]; score=sum(w for _,ok,w in report if ok); miss=[n for n,ok,_ in report if not ok]; assert abs(score-0.90)<1e-9 and miss==['数据与证据']; print('REPORT_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "报告中「系统运行稳定」这一结论，正确的支撑方式是？"
+    options:
+      - "附上连续运行数据、日志与测试条件"
+      - "多写几遍结论"
+      - "请同事口头证明"
+      - "用加粗字体"
+    answer: 0
+    explain: "结论必须能被证据核对，否则只是意见。"
+  - q: "答辩时更推荐的结构是？"
+    options:
+      - "结论先行：问题、方案、证据、限制"
+      - "从第一次调试讲起"
+      - "只讲技术细节"
+      - "只讲工作量"
+    answer: 0
+    explain: "评审时间有限，先说结论与证据，过程按需展开。"
+  - q: "主动写明未验证项的作用是？"
+    options:
+      - "让评价建立在真实边界上，避免误导"
+      - "会被直接判失败"
+      - "显得不专业"
+      - "没有必要"
+    answer: 0
+    explain: "诚实披露限制是工程素养，隐瞒风险才是问题。"
+  - q: "让别人能复现你的结果，至少需要？"
+    options:
+      - "版本号、数据来源与可执行步骤"
+      - "只有截图"
+      - "只有口头说明"
+      - "只有结论"
+    answer: 0
+    explain: "不可复现的成果无法被独立验证，评审价值大打折扣。"

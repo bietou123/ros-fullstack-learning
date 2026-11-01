@@ -1,0 +1,42 @@
+id: "S10-01"
+stage: "s10"
+title: "项目拆解与验收标准"
+durationMin: 30
+type: "teach"
+output: "任务分解"
+tags: ["项目拆解", "WBS", "验收标准"]
+sources: ["05_交付实施SOP", "01_产品与需求", "C_现场踩坑"]
+experiment:
+  id: "s10-01-wbs"
+  ros: "none"
+  commands:
+    - "python3 -c \"wp=[('A','需求与验收标准',2,['-']),('B','执行器模型',3,['A']),('C','指令与状态机',4,['A']),('D','标定与TF',3,['B']),('E','部署与演练',2,['C','D']),('F','验收报告',2,['E'])]; total=sum(w for _,_,w,_ in wp); print('wp=%d person_days=%d final=%s'%(len(wp),total,wp[-1][0]))\""
+  checks:
+    - "python3 -c \"wp=[('A','需求与验收标准',2,['-']),('B','执行器模型',3,['A']),('C','指令与状态机',4,['A']),('D','标定与TF',3,['B']),('E','部署与演练',2,['C','D']),('F','验收报告',2,['E'])]; ids={w[0]:i for i,w in enumerate(wp)}; bad=[(w[0],d) for w in wp for d in w[3] if d not in ('-','—') and ids[d]>=ids[w[0]]]; assert not bad and sum(w for _,_,w,_ in wp)==16; print('WBS_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "工作包排序时，应该优先处理？"
+    options:
+      - "被依赖的、风险高的工作包"
+      - "最简单的工作包"
+      - "界面最好看的工作包"
+      - "最后随便排"
+    answer: 0
+    explain: "前置与高风险项决定后面能否继续，越早暴露越好。"
+  - q: "合格的验收标准应该？"
+    options:
+      - "可测量、可复现，并有证据"
+      - "写成「基本完成」"
+      - "由交付方口头确认"
+      - "越模糊越灵活"
+    answer: 0
+    explain: "没有判据与证据，验收就会变成各说各话。"
+  - q: "项目范围控制的关键动作是？"
+    options:
+      - "明确写出不做什么，新需求进入后续版本"
+      - "任何需求都立即插入当前迭代"
+      - "不记录范围"
+      - "把时间估算翻倍就没事"
+    answer: 0
+    explain: "范围蔓延是延期的最常见原因，冻结与分流是纪律。"

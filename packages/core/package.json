@@ -1,0 +1,17 @@
+{
+  "name": "@rl/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "idb": "^8.0.0",
+    "js-sha256": "^0.11.0",
+    "minisearch": "^7.1.0"
+  }
+}

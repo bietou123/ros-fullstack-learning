@@ -1,0 +1,45 @@
+id: "S2-02"
+stage: "s2"
+title: "colcon 工作空间与包"
+durationMin: 35
+type: "teach"
+output: "ament_python 包"
+tags: ["colcon", "ament"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s2-02-colcon"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && rm -rf /tmp/ws && mkdir -p /tmp/ws/src && cd /tmp/ws/src && ros2 pkg create --build-type ament_python rl_demo --dependencies rclpy std_msgs >/tmp/c.log 2>&1 && cd /tmp/ws && colcon build --packages-select rl_demo >/tmp/b.log 2>&1 && source install/setup.bash && ros2 pkg prefix rl_demo'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v colcon'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg create --help | grep -q ament_python'"
+  timeoutSec: 420
+  headless: true
+quiz:
+  - q: "colcon 构建完成后，要激活工作空间应该 source？"
+    options:
+      - "devel/setup.bash"
+      - "install/setup.bash"
+      - "build/setup.bash"
+      - "无需 source"
+    answer: 1
+    explain: "colcon 的产物在 install/，ROS1 catkin 才是 devel/。"
+  - q: "只想重新编译一个包，用哪个参数？"
+    options:
+      - "--packages-select 包名"
+      - "--one"
+      - "--fast"
+      - "--single"
+    answer: 0
+    explain: "只编指定包，能显著节省大工作空间的构建时间。"
+  - q: "构建失败但要看到具体报错，应该？"
+    options:
+      - "重装 ROS"
+      - "加 --event-handlers console_direct+ 或查看 log/latest_build"
+      - "删除 install 目录"
+      - "换 Python 版本"
+    answer: 1
+    explain: "默认输出被折叠，需显式打开或查日志。"

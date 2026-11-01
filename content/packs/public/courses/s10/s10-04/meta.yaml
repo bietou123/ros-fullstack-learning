@@ -1,0 +1,42 @@
+id: "S10-04"
+stage: "s10"
+title: "标定与 TF 集成"
+durationMin: 45
+type: "teach"
+output: "标定结果"
+tags: ["标定", "TF", "坐标变换"]
+sources: ["04_标定与算法", "激光-本体外参标定使用手册.pdf", "C_现场踩坑"]
+experiment:
+  id: "s10-04-tf-chain"
+  ros: "none"
+  commands:
+    - "python3 -c \"import math; a1=math.radians(30); a2=math.radians(20); x=0.5+2*math.cos(a1)+1*math.cos(a1+a2); y=2*math.sin(a1)+1*math.sin(a1+a2); print('tip=(%.3f,%.3f)'%(x,y))\""
+  checks:
+    - "python3 -c \"import math; a1=math.radians(30); a2=math.radians(20); x=0.5+2*math.cos(a1)+1*math.cos(a1+a2); y=2*math.sin(a1)+1*math.sin(a1+a2); assert abs(x-2.875)<0.001 and abs(y-1.766)<0.001; print('TF_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "坐标变换矩阵相乘时，顺序错了会导致？"
+    options:
+      - "末端位置与方向都错，但结果看起来仍可能合理"
+      - "没有任何影响"
+      - "只会影响颜色"
+      - "自动纠正"
+    answer: 0
+    explain: "矩阵乘法不可交换，顺序错误不会报错，只会给出错误结果。"
+  - q: "静态外参与动态变换的正确区分是？"
+    options:
+      - "安装外参静态发布，关节角动态发布并带时间戳"
+      - "两者都用静态发布"
+      - "两者都不需要时间戳"
+      - "外参每次运动都重新计算"
+    answer: 0
+    explain: "动态变换必须与传感器时间对齐，否则会出现偶发错位。"
+  - q: "验证坐标链最可靠的做法是？"
+    options:
+      - "手算对照 + 正逆闭环 + 已知点对齐"
+      - "只看可视化图顺眼"
+      - "只看代码有没有报错"
+      - "只跑一次通过就算"
+    answer: 0
+    explain: "多种独立校验才能发现顺序、单位、漏乘等隐蔽错误。"

@@ -1,0 +1,43 @@
+id: "S4-07"
+stage: "s4"
+title: "时间同步与驱动封装"
+durationMin: 35
+type: "teach"
+output: "驱动包骨架"
+tags: ["时间同步", "驱动"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s4-07-clock"
+  ros: "none"
+  commands:
+    - "python3 -c \"import time; a=time.monotonic(); time.sleep(0.1); print('mono_delta=%.4f'%(time.monotonic()-a))\""
+    - "date -u +%Y-%m-%dT%H:%M:%SZ; timedatectl status 2>/dev/null | head -n 5 || true"
+  checks:
+    - "python3 -c \"import time; a=time.monotonic(); b=time.monotonic(); assert b>a\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "测控制周期应该用？"
+    options:
+      - "CLOCK_REALTIME"
+      - "CLOCK_MONOTONIC"
+      - "系统日期字符串"
+      - "NTP 服务器时间"
+    answer: 1
+    explain: "单调时钟不受校时跳变影响。"
+  - q: "多传感器融合对时间同步的要求通常是？"
+    options:
+      - "秒级"
+      - "微秒到毫秒级，视算法而定"
+      - "不需要同步"
+      - "天级"
+    answer: 1
+    explain: "融合精度直接受时间对齐误差限制。"
+  - q: "驱动拔线后应如何表现？"
+    options:
+      - "继续发布最后的值"
+      - "停止发布数据并通过状态话题上报断线"
+      - "静默退出"
+      - "自动重启系统"
+    answer: 1
+    explain: "不能把旧值当新值用，必须显式上报。"

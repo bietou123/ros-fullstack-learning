@@ -1,0 +1,45 @@
+id: "S1-04"
+stage: "s1"
+title: "topic、消息与 rostopic 诊断"
+durationMin: 35
+type: "teach"
+output: "消息抓取"
+tags: ["rostopic", "排障"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s1-04-topic"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 12 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 2 && timeout 6 rostopic hz /rl_demo; true'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rosmsg show std_msgs/String | head -n 3'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v rostopic && command -v rosmsg'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rosmsg show std_msgs/String | grep -q data'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "`rostopic hz` 显示 `no new messages`，说明？"
+    options:
+      - "话题不存在"
+      - "话题存在但当前没有任何消息到达"
+      - "master 没启动"
+      - "消息类型错误"
+    answer: 1
+    explain: "hz 能订阅到话题，只是收不到数据。"
+  - q: "判断「数据是否新鲜」应该看？"
+    options:
+      - "只看 rostopic hz 的频率"
+      - "看消息里的 header.stamp 是否在推进"
+      - "看节点数量"
+      - "看 CPU 占用"
+    answer: 1
+    explain: "频率正常也可能是上游复用了旧时间戳。"
+  - q: "`rostopic info` 显示同一话题有两个 Publisher，风险是什么？"
+    options:
+      - "没有风险"
+      - "两个节点抢发，下游收到交错数据，难以复现"
+      - "会自动合并"
+      - "ROS 会自动杀掉一个"
+    answer: 1
+    explain: "多发布者是隐蔽故障源，必须确认是否预期。"

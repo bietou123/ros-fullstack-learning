@@ -1,0 +1,44 @@
+id: "S1-02"
+stage: "s1"
+title: "工作空间与 catkin 包"
+durationMin: 35
+type: "teach"
+output: "自定义包"
+tags: ["catkin", "工程结构"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s1-02-catkin"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rm -rf /tmp/ws && mkdir -p /tmp/ws/src && cd /tmp/ws && catkin_make -j1 >/tmp/b.log 2>&1 && cd src && catkin_create_pkg rl_demo rospy std_msgs >/tmp/c.log 2>&1 && cd .. && catkin_make -j1 >>/tmp/b.log 2>&1 && source devel/setup.bash && rospack find rl_demo'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v catkin_make'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v catkin_create_pkg'"
+  timeoutSec: 420
+  headless: true
+quiz:
+  - q: "新开终端后 `rospack find` 找不到自己刚建的包，最可能的原因是？"
+    options:
+      - "包被删了"
+      - "没有 source 工作空间的 devel/setup.bash"
+      - "ROS 版本不对"
+      - "磁盘满了"
+    answer: 1
+    explain: "每个终端的环境变量独立，必须重新 source。"
+  - q: "`build/` 与 `devel/` 目录应该怎么处理？"
+    options:
+      - "一起提交到 Git"
+      - "加入 .gitignore，不提交"
+      - "打包发给同事"
+      - "手工编辑其中的文件"
+    answer: 1
+    explain: "它们是编译产物，可重新生成，提交会污染仓库。"
+  - q: "包的依赖应该写在哪里？"
+    options:
+      - "只写在 README"
+      - "写入 package.xml（编译期依赖再配合 CMakeLists.txt）"
+      - "写在 launch 文件里"
+      - "写在环境变量里"
+    answer: 1
+    explain: "package.xml 声明依赖，C++ 还需 CMakeLists.txt 配合。"

@@ -1,0 +1,44 @@
+id: "S5-04"
+stage: "s5"
+title: "外参标定原理与工具"
+durationMin: 40
+type: "teach"
+output: "手眼标定小实验"
+tags: ["外参", "手眼标定", "最小二乘"]
+sources: ["激光-本体外参标定使用手册.pdf", "激光相机标定使用手册.pdf", "C_现场踩坑"]
+experiment:
+  id: "s5-04-extrinsic"
+  ros: "none"
+  commands:
+    - "python3 -c \"import math; a=math.radians(90); c,s=math.cos(a),math.sin(a); x,y=1.0,2.0; q=(c*x-s*y,s*x+c*y); q2=(c*q[0]+s*q[1],-s*q[0]+c*q[1]); print('p=(%.3f,%.3f) q=(%.3f,%.3f) q2=(%.3f,%.3f)'%(x,y,q[0],q[1],q2[0],q2[1]))\""
+    - "python3 -c \"import math; P=[(0,0),(1,0),(0,1),(2,1),(1,2),(-1,1)]; a=math.radians(30); c,s=math.cos(a),math.sin(a); Q=[(c*x-s*y+1, s*x+c*y+2) for x,y in P]; px=sum(p[0] for p in P)/6; py=sum(p[1] for p in P)/6; qx=sum(q[0] for q in Q)/6; qy=sum(q[1] for q in Q)/6; dot=sum((p[0]-px)*(q[0]-qx)+(p[1]-py)*(q[1]-qy) for p,q in zip(P,Q)); crs=sum((p[0]-px)*(q[1]-qy)-(p[1]-py)*(q[0]-qx) for p,q in zip(P,Q)); th=math.atan2(crs,dot); tx=qx-(math.cos(th)*px-math.sin(th)*py); ty=qy-(math.sin(th)*px+math.cos(th)*py); res=math.sqrt(sum(((math.cos(th)*p[0]-math.sin(th)*p[1]+tx)-q[0])**2+((math.sin(th)*p[0]+math.cos(th)*p[1]+ty)-q[1])**2 for p,q in zip(P,Q))/6); print('theta=%.2f tx=%.3f ty=%.3f rms=%.2e'%(math.degrees(th),tx,ty,res))\""
+    - "python3 -c \"import math; a=math.radians(90); c,s=math.cos(a),math.sin(a); x,y=1.0,0.0; r1=(c*x-s*y+2, s*x+c*y+1); r2=(c*(x+2)-s*(y+1), s*(x+2)+c*(y+1)); print('R_then_t=%s t_then_R=%s'%(r1,r2))\""
+  checks:
+    - "python3 -c \"import math; P=[(0,0),(1,0),(0,1),(2,1),(1,2),(-1,1)]; a=math.radians(30); c,s=math.cos(a),math.sin(a); Q=[(c*x-s*y+1, s*x+c*y+2) for x,y in P]; px=sum(p[0] for p in P)/6; py=sum(p[1] for p in P)/6; qx=sum(q[0] for q in Q)/6; qy=sum(q[1] for q in Q)/6; dot=sum((p[0]-px)*(q[0]-qx)+(p[1]-py)*(q[1]-qy) for p,q in zip(P,Q)); crs=sum((p[0]-px)*(q[1]-qy)-(p[1]-py)*(q[0]-qx) for p,q in zip(P,Q)); th=math.atan2(crs,dot); tx=qx-(math.cos(th)*px-math.sin(th)*py); ty=qy-(math.sin(th)*px+math.cos(th)*py); res=math.sqrt(sum(((math.cos(th)*p[0]-math.sin(th)*p[1]+tx)-q[0])**2+((math.sin(th)*p[0]+math.cos(th)*p[1]+ty)-q[1])**2 for p,q in zip(P,Q))/6); assert abs(math.degrees(th)-30)<1e-6 and res<1e-9\""
+  timeoutSec: 90
+  headless: true
+quiz:
+  - q: "手眼标定方程 AX = XB 中，X 表示什么？"
+    options:
+      - "传感器相对本体或末端的待求外参"
+      - "相机内参"
+      - "电机减速比"
+      - "时间同步偏差"
+    answer: 0
+    explain: "A、B 是两次运动/观测的变化，X 是固定不变的外参。"
+  - q: "标定后「视野中心准、边缘偏差大」，最可能的原因是？"
+    options:
+      - "内参或畸变未标定"
+      - "外参旋转错了 180°"
+      - "标定点太少"
+      - "时间戳不对"
+    answer: 0
+    explain: "中心准边缘偏是典型的内参/畸变误差特征。"
+  - q: "提高外参标定可信度最有效的做法是？"
+    options:
+      - "多姿态覆盖工作空间并做交叉验证"
+      - "在同一个位置多采 100 组数据"
+      - "只用残差最小的点对"
+      - "把标定物放得越近越好"
+    answer: 0
+    explain: "激励不足时残差可以很小，但外推很差。"

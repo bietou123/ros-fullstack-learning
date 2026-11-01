@@ -1,0 +1,42 @@
+id: "S8-01"
+stage: "s8"
+title: "Docker Compose 编排"
+durationMin: 35
+type: "teach"
+output: "一键起服务"
+tags: ["Docker", "Compose", "编排"]
+sources: ["06_软件部署与运维", "E_ROS与Linux命令手册"]
+experiment:
+  id: "s8-01-compose"
+  ros: "none"
+  commands:
+    - "python3 -c \"lines=['services:','  app:','    image: busybox','    restart: unless-stopped']; open('/tmp/c.yml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/c.yml')); print(sorted(d['services']),d['services']['app']['restart'])\""
+  checks:
+    - "python3 -c \"lines=['services:','  app:','    image: busybox','    restart: unless-stopped']; open('/tmp/c.yml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/c.yml')); assert d['services']['app']['restart']=='unless-stopped'\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "Compose 中 `depends_on` 的实际含义是？"
+    options:
+      - "保证启动顺序，不保证对方已就绪"
+      - "保证对方健康后才启动"
+      - "保证网络互通"
+      - "保证数据持久化"
+    answer: 0
+    explain: "要等就绪需配合 healthcheck 与 condition。"
+  - q: "ROS2 容器之间发现不到对方，常见原因是？"
+    options:
+      - "网络模式或 DDS 多播配置不正确"
+      - "镜像太大"
+      - "重启策略写错"
+      - "volume 没挂载"
+    answer: 0
+    explain: "先在容器内验证话题可见性。"
+  - q: "现场参数更推荐怎么管理？"
+    options:
+      - "外挂配置文件并带版本号"
+      - "直接打进镜像"
+      - "写在启动命令里"
+      - "只在聊天里传递"
+    answer: 0
+    explain: "外挂便于现场修改与追溯。"

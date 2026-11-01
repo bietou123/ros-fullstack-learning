@@ -1,0 +1,42 @@
+id: "S4-04"
+stage: "s4"
+title: "串口、RS485 与 Modbus RTU"
+durationMin: 35
+type: "teach"
+output: "虚拟串口"
+tags: ["Modbus", "RS485"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s4-04-crc"
+  ros: "none"
+  commands:
+    - "python3 -c \"import functools; c=functools.reduce(lambda c,b: functools.reduce(lambda x,_:(x>>1)^0xA001 if x&1 else x>>1, range(8), c^b), [1,3,0,0,0,10], 0xFFFF); print(hex(c)); print(bytes([1,3,0,0,0,10]).hex()+format(c&255,'02x')+format(c>>8,'02x'))\""
+  checks:
+    - "python3 -c \"import functools; c=functools.reduce(lambda c,b: functools.reduce(lambda x,_:(x>>1)^0xA001 if x&1 else x>>1, range(8), c^b), [1,3,0,0,0,10], 0xFFFF); assert c==0xCDC5\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "Modbus RTU 帧尾 CRC16 在报文中的字节顺序是？"
+    options:
+      - "高字节在前"
+      - "低字节在前"
+      - "只有一字节"
+      - "可选"
+    answer: 1
+    explain: "CRC 低字节先发，这是最常见的错误点。"
+  - q: "RS485 总线正确的接线拓扑是？"
+    options:
+      - "星型"
+      - "手拉手总线型，两端 120Ω 终端"
+      - "环形"
+      - "任意"
+    answer: 1
+    explain: "分支会引入反射，必须总线型。"
+  - q: "协议文档写寄存器 40001，报文里对应的地址是？"
+    options:
+      - "40001"
+      - "0"
+      - "1"
+      - "40000"
+    answer: 1
+    explain: "4xxxx 是文档编号，报文地址从 0 开始。"

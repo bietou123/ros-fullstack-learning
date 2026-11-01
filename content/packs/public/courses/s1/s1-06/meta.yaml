@@ -1,0 +1,44 @@
+id: "S1-06"
+stage: "s1"
+title: "rosbag 录制与回放"
+durationMin: 30
+type: "teach"
+output: "诊断用 bag"
+tags: ["rosbag", "复盘"]
+sources: ["C_现场踩坑", "E_ROS与Linux命令手册"]
+experiment:
+  id: "s1-06-bag"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 10 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 1 && timeout 5 rosbag record -O /tmp/demo.bag /rl_demo; rosbag info /tmp/demo.bag | head -n 12; true'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v rosbag'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rosbag --help 2>&1 | grep -q record'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "对外发送 bag 前最重要的动作是？"
+    options:
+      - "压缩到最小"
+      - "筛选话题，确认不含现场敏感信息"
+      - "改名"
+      - "转成 csv"
+    answer: 1
+    explain: "bag 可能包含现场 IP、画面等，必须脱敏。"
+  - q: "在实车上直接回放含控制话题的 bag，风险是？"
+    options:
+      - "没有风险"
+      - "等于给车发了一次真实控制指令"
+      - "只会影响日志"
+      - "会让 bag 损坏"
+    answer: 1
+    explain: "回放前必须断开执行层或进入仿真。"
+  - q: "回放后下游节点收不到数据，常见原因是？"
+    options:
+      - "bag 文件损坏"
+      - "时间/时钟设置不匹配（需 --clock 与 use_sim_time）"
+      - "话题被删除"
+      - "ROS 版本不支持"
+    answer: 1
+    explain: "回放需要仿真时钟配合，否则时间戳判据失效。"

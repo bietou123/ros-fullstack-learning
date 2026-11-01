@@ -1,0 +1,42 @@
+id: "S10-05"
+stage: "s10"
+title: "部署与故障演练"
+durationMin: 45
+type: "teach"
+output: "compose + 演练"
+tags: ["部署", "故障演练", "重启"]
+sources: ["06_软件部署与运维", "05_交付实施SOP", "C_现场踩坑"]
+experiment:
+  id: "s10-05-crashloop"
+  ros: "none"
+  commands:
+    - "python3 -c \"events=[0,5,12,40,55,70]; window=60; limit=3; mx=max(sum(1 for t in events if s<=t<s+window) for s in events); print('fails=%d max_in_60s=%d crashloop=%s'%(len(events),mx,mx>=limit))\""
+  checks:
+    - "python3 -c \"events=[0,5,12,40,55,70]; window=60; limit=3; mx=max(sum(1 for t in events if s<=t<s+window) for s in events); assert mx==5 and mx>=limit; print('DRILL_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "`depends_on` 只写服务名（不配健康条件）的问题是？"
+    options:
+      - "只保证容器已启动，不保证依赖可用"
+      - "会让容器永远不启动"
+      - "会删除数据"
+      - "没有影响"
+    answer: 0
+    explain: "依赖服务可能还在初始化，必须等 healthy。"
+  - q: "服务短时间内反复启动失败，正确做法是？"
+    options:
+      - "达到失败阈值后停止重启并告警"
+      - "无限重试"
+      - "忽略错误"
+      - "增加 CPU"
+    answer: 0
+    explain: "无限重启会刷日志、烧 CPU，还掩盖 root cause。"
+  - q: "部署完成的最低标准更接近？"
+    options:
+      - "坏了能自动恢复，恢复不了能回滚"
+      - "第一次启动成功"
+      - "日志没有报错"
+      - "界面能打开"
+    answer: 0
+    explain: "部署要面向长期运行与故障，而不是一次成功。"

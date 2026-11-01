@@ -1,0 +1,42 @@
+id: "S9-05"
+stage: "s9"
+title: "验收检查点"
+durationMin: 35
+type: "teach"
+output: "验收清单"
+tags: ["验收", "检查点", "交付"]
+sources: ["05_交付实施SOP", "03-安全设计与状态机.md", "C_现场踩坑"]
+experiment:
+  id: "s9-05-acceptance"
+  ros: "none"
+  commands:
+    - "python3 -c \"items=[('estop','critical',True),('watchdog','critical',True),('latency','major',False),('log','minor',True)]; failed=[n for n,sev,p in items if not p]; critical_failed=[n for n,sev,p in items if sev=='critical' and not p]; rate=sum(p for _,_,p in items)/len(items)*100; print('pass_rate=%.0f failed=%s critical_failed=%s'%(rate,failed,critical_failed))\""
+  checks:
+    - "python3 -c \"items=[('estop','critical',True),('watchdog','critical',True),('latency','major',False),('log','minor',True)]; rate=sum(p for _,_,p in items)/len(items)*100; cf=[n for n,sev,p in items if sev=='critical' and not p]; assert rate==75 and not cf; print('ACCEPT_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "以下哪一项是合格的验收检查点？"
+    options:
+      - "连续 20 次重复动作，误差不超过项目规定阈值"
+      - "动作顺畅"
+      - "界面友好"
+      - "感觉还行"
+    answer: 0
+    explain: "检查点必须可测量、可复现、有明确判据。"
+  - q: "整体通过率很高，但一项关键项失败，结论应该是？"
+    options:
+      - "整体不通过，关键项一票否决"
+      - "通过，通过率足够"
+      - "下次再说"
+      - "降低关键项级别"
+    answer: 0
+    explain: "安全与核心功能类检查点不能被通过率平均掉。"
+  - q: "验收记录中最关键的证据是？"
+    options:
+      - "可追溯的数据、日志与双方签字"
+      - "参与人的口头确认"
+      - "会议合影"
+      - "聊天记录里的「可以」"
+    answer: 0
+    explain: "没有证据的通过，事后无法复核也无法追责。"

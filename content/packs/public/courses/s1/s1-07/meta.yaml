@@ -1,0 +1,45 @@
+id: "S1-07"
+stage: "s1"
+title: "TF 入门与 RViz"
+durationMin: 40
+type: "teach"
+output: "TF 树"
+tags: ["TF", "RViz"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s1-07-tf"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 12 rosrun tf static_transform_publisher 0 0 1 0 0 0 base_link boom_base 100 >/dev/null 2>&1 &) && sleep 2 && timeout 6 rosrun tf tf_echo base_link boom_base; true'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find tf && rospack find tf2_ros'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find tf | grep -q tf'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find tf2_ros | grep -q tf2_ros'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "TF 报 `Frame [x] does not exist`，首先该做什么？"
+    options:
+      - "重装 ROS"
+      - "用 view_frames 检查 TF 树里是否真有这个框架名"
+      - "重启电脑"
+      - "改坐标系算法"
+    answer: 1
+    explain: "多数是名字拼写不一致或该环节压根没发布。"
+  - q: "固定安装在车体上的传感器，正确做法是？"
+    options:
+      - "每帧动态发布变换"
+      - "用 static_transform_publisher 发一次静态变换"
+      - "不发布变换"
+      - "写死在算法里"
+    answer: 1
+    explain: "固定关系用静态变换，动态发布会导致抖动与额外负载。"
+  - q: "录制用于 TF 排障的 bag 时，必须包含？"
+    options:
+      - "只录控制话题"
+      - "/tf（必要时还有 /tf_static）与相关时间源"
+      - "只录 rosout"
+      - "只录图像"
+    answer: 1
+    explain: "缺 /tf 的 bag 回放时整棵坐标树是断的。"

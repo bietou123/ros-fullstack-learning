@@ -1,0 +1,52 @@
+id: "S0-03"
+stage: "s0"
+title: "文件系统、权限、进程与 systemd 直觉"
+durationMin: 40
+type: "teach"
+output: "服务化小实验"
+tags: ["Linux", "systemd", "权限"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s0-03-systemd"
+  ros: "none"
+  commands:
+    - "rm -rf /tmp/rl-s03 && mkdir -p /tmp/rl-s03 && printf '#!/bin/sh\\necho ok\\n' > /tmp/rl-s03/run.sh && chmod 700 /tmp/rl-s03/run.sh && stat -c '%a %n' /tmp/rl-s03/run.sh && /tmp/rl-s03/run.sh"
+    - "systemctl --user reset-failed rl-s03-demo 2>/dev/null; systemd-run --user --unit rl-s03-demo --collect /bin/sh -c 'sleep 45' && systemctl --user is-active rl-s03-demo"
+  checks:
+    - "test \"$(stat -c '%a' /tmp/rl-s03/run.sh)\" = \"700\""
+    - "systemctl --user is-active --quiet rl-s03-demo"
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "权限 640 表示什么？"
+    options:
+      - "属主读写，属组只读，其他人无权限"
+      - "所有人可读写"
+      - "属主执行，属组写，其他人读"
+      - "属主只读，属组读写，其他人执行"
+    answer: 0
+    explain: "6=rw-，4=r--，0=---。"
+  - q: "修改了 /etc/systemd/system 下的 unit 文件后，正确操作是？"
+    options:
+      - "直接 reboot"
+      - "systemctl daemon-reload 后再 restart"
+      - "只需 systemctl restart"
+      - "删除 /run 下缓存"
+    answer: 1
+    explain: "systemd 需要重新读取 unit，否则仍使用旧配置。"
+  - q: "进程处于 D 状态，`kill -9` 无效，最可能的原因是？"
+    options:
+      - "进程被设置了免死"
+      - "进程在内核态等待 I/O，信号要等它返回用户态才处理"
+      - "权限不够"
+      - "进程是僵尸"
+    answer: 1
+    explain: "D 是不可中断睡眠，常见于磁盘/驱动阻塞，需查底层 I/O。"
+  - q: "用户级服务在用户退出后停止，想让它常驻，应开启什么？"
+    options:
+      - "Restart=always"
+      - "loginctl enable-linger <用户>"
+      - "Type=forking"
+      - "WantedBy=multi-user.target"
+    answer: 1
+    explain: "linger 让用户级 systemd 在未登录时也保持运行。"

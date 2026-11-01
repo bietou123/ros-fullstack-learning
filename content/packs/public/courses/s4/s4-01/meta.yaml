@@ -1,0 +1,33 @@
+id: "S4-01"
+stage: "s4"
+title: "CAN 物理层与帧结构"
+durationMin: 35
+type: "teach"
+output: "帧解析练习"
+tags: ["CAN", "物理层"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+quiz:
+  - q: "经典 CAN 每帧最多携带多少字节数据？"
+    options:
+      - "4"
+      - "8"
+      - "64"
+      - "不限"
+    answer: 1
+    explain: "经典 CAN 最多 8 字节，CAN FD 才可到 64。"
+  - q: "CAN 总线仲裁时，哪个帧优先发送？"
+    options:
+      - "ID 数值大的"
+      - "ID 数值小的"
+      - "长度长的"
+      - "随机"
+    answer: 1
+    explain: "ID 越小优先级越高，冲突时小 ID 赢得仲裁。"
+  - q: "总线两端各接 120Ω 终端电阻，用万用表测两端之间的电阻应约为？"
+    options:
+      - "120Ω"
+      - "60Ω"
+      - "240Ω"
+      - "0Ω"
+    answer: 1
+    explain: "两个 120Ω 并联约 60Ω，这是快速物理层检查法。"

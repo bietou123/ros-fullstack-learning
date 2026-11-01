@@ -1,0 +1,46 @@
+id: "S2-05"
+stage: "s2"
+title: "lifecycle 与 composition"
+durationMin: 35
+type: "teach"
+output: "受管节点"
+tags: ["lifecycle", "composition"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s2-05-lifecycle"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 lifecycle --help | head -n 6'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 component --help | head -n 6 && ros2 pkg list | grep -E \"lifecycle|component\" | head -n 5'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 lifecycle --help | grep -q configure'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 component --help | grep -q load'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "lifecycle 节点启动后停在 unconfigured 状态，此时它？"
+    options:
+      - "正常收发数据"
+      - "还没初始化发布/订阅，不会真正工作"
+      - "已经崩溃"
+      - "自动激活"
+    answer: 1
+    explain: "configure 之后才创建通信接口，activate 后才开始工作。"
+  - q: "composition 的主要收益是？"
+    options:
+      - "自动容错"
+      - "多节点共享一个进程，降低内存与进程间通信开销"
+      - "自动迁移到 ROS2"
+      - "提高网络带宽"
+    answer: 1
+    explain: "同进程内通信走指针，省内存省拷贝；代价是故障域共享。"
+  - q: "关键安全节点是否应该放进 composition 容器？"
+    options:
+      - "应该，越集中越好"
+      - "谨慎，同进程崩溃会拖垮全部节点"
+      - "无关紧要"
+      - "必须"
+    answer: 1
+    explain: "故障域共享是主要风险，关键节点通常独立进程。"

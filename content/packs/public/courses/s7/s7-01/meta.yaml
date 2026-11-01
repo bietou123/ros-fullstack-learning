@@ -1,0 +1,43 @@
+id: "S7-01"
+stage: "s7"
+title: "SLAM 概念与建图"
+durationMin: 35
+type: "teach"
+output: "小场景地图"
+tags: ["SLAM", "建图", "栅格地图"]
+sources: ["04_标定与算法", "06_软件部署与运维", "C_现场踩坑"]
+experiment:
+  id: "s7-01-slam-grid"
+  ros: "none"
+  commands:
+    - "python3 -c \"import math; L=0.0; [(L:=L+d) for d in (0.9,0.9,0.9,-0.7,-0.7)]; print('L=%.2f p=%.3f'%(L,1/(1+math.exp(-L))))\""
+    - "python3 -c \"print('drift_m=%.1f'%(100*0.01))\""
+  checks:
+    - "python3 -c \"import math; L=0.0; [(L:=L+d) for d in (0.9,0.9,0.9,-0.7,-0.7)]; p=1/(1+math.exp(-L)); assert 0.7<p<0.9\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "SLAM 中回环检测（loop closure）的核心作用是？"
+    options:
+      - "识别重访区域并消除累积漂移"
+      - "提高激光扫描频率"
+      - "降低地图分辨率"
+      - "替代传感器标定"
+    answer: 0
+    explain: "没有回环，位姿误差会一直累积。"
+  - q: "建图时为什么要回到起点附近？"
+    options:
+      - "形成闭环，校正累积误差"
+      - "让电池充电"
+      - "清空地图缓存"
+      - "提高定位频率"
+    answer: 0
+    explain: "闭环约束是后端优化的关键信息。"
+  - q: "评估 2D 地图质量最直接的观察是？"
+    options:
+      - "墙面是否重影、闭环是否对齐"
+      - "文件大小"
+      - "颜色是否好看"
+      - "分辨率的位数"
+    answer: 0
+    explain: "重影和闭环误差直接反映建图精度。"

@@ -1,0 +1,43 @@
+id: "S7-02"
+stage: "s7"
+title: "定位与地图维护"
+durationMin: 35
+type: "teach"
+output: "定位收敛记录"
+tags: ["定位", "AMCL", "地图维护"]
+sources: ["04_标定与算法", "06_软件部署与运维", "C_现场踩坑"]
+experiment:
+  id: "s7-02-localization"
+  ros: "none"
+  commands:
+    - "python3 -c \"w=[0.1,0.2,0.4,0.2,0.1]; s=sum(w); wn=[x/s for x in w]; print('ess=%.2f'%(1/sum(x*x for x in wn)))\""
+    - "python3 -c \"import math; cov_xy=0.09; sig=math.sqrt(cov_xy); print('sigma_m=%.2f trusted=%s'%(sig,sig<0.5))\""
+  checks:
+    - "python3 -c \"import math; w=[0.1,0.2,0.4,0.2,0.1]; s=sum(w); wn=[x/s for x in w]; ess=1/sum(x*x for x in wn); sig=math.sqrt(0.09); assert abs(ess-3.846)<0.01 and sig<0.5\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "机器被搬动后，局部定位固守原位置，应该怎么办？"
+    options:
+      - "检测匹配失败并触发全局重定位"
+      - "继续局部跟踪"
+      - "重启地图服务即可"
+      - "降低定位频率"
+    answer: 0
+    explain: "这是 kidnapped robot 问题，需要全局重定位。"
+  - q: "粒子分布很分散、ESS 很大，通常说明？"
+    options:
+      - "定位尚未收敛或多峰"
+      - "定位精度很高"
+      - "传感器故障"
+      - "地图分辨率低"
+    answer: 0
+    explain: "权重不集中意味着还没确定位置。"
+  - q: "厂房新增固定结构后，最正确的处理是？"
+    options:
+      - "重新扫描更新地图并升版本"
+      - "继续用旧地图"
+      - "关闭定位"
+      - "只改定位频率"
+    answer: 0
+    explain: "静态地图变化会持续造成定位偏差。"

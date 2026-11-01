@@ -1,0 +1,42 @@
+id: "S10-02"
+stage: "s10"
+title: "虚拟 CAN + 执行器模型"
+durationMin: 45
+type: "teach"
+output: "执行器仿真"
+tags: ["CAN", "执行器", "仿真"]
+sources: ["02_架构与协议", "03_硬件与电气", "04_标定与算法"]
+experiment:
+  id: "s10-02-actuator"
+  ros: "none"
+  commands:
+    - "python3 -c \"tau=0.12; dt=0.01; vmax=1.0; cmd=1.5; vs=[0.0]; [vs.append(vs[-1]+(min(cmd,vmax)-vs[-1])*dt/tau) for _ in range(100)]; t90=next(i*dt for i,v in enumerate(vs) if v>=0.9); print('v_final=%.3f t90=%.2fs'%(vs[-1],t90))\""
+  checks:
+    - "python3 -c \"tau=0.12; dt=0.01; vmax=1.0; cmd=1.5; vs=[0.0]; [vs.append(vs[-1]+(min(cmd,vmax)-vs[-1])*dt/tau) for _ in range(100)]; t90=next(i*dt for i,v in enumerate(vs) if v>=0.9); assert abs(t90-0.27)<1e-9 and vs[-1]>0.99; print('ACTUATOR_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "一阶模型的时间常数 τ 增大，阶跃响应会？"
+    options:
+      - "变慢，t90 增大"
+      - "变快，t90 减小"
+      - "不变"
+      - "变成振荡"
+    answer: 0
+    explain: "t90 约为 2.3τ，τ 越大响应越慢。"
+  - q: "指令进入执行器模型前，正确的处理顺序是？"
+    options:
+      - "限幅 → 限速 → 动态模型"
+      - "动态模型 → 限幅 → 限速"
+      - "只限幅即可"
+      - "不需要处理"
+    answer: 0
+    explain: "先保证物理约束，再让模型响应限幅后的指令。"
+  - q: "虚拟执行器模型最不适合用来验证？"
+    options:
+      - "真实设备的精度与液压非线性"
+      - "状态机逻辑"
+      - "指令超限处理"
+      - "超时行为"
+    answer: 0
+    explain: "模型简化了非线性与磨损，精度必须实机验证。"

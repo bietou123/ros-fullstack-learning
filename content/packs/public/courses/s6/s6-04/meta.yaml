@@ -1,0 +1,43 @@
+id: "S6-04"
+stage: "s6"
+title: "三级停机与急停链路"
+durationMin: 35
+type: "teach"
+output: "停机链路图"
+tags: ["急停", "安全回路", "停机"]
+sources: ["03-安全设计与状态机.md", "05_交付实施SOP", "C_现场踩坑"]
+experiment:
+  id: "s6-04-estop"
+  ros: "none"
+  commands:
+    - "python3 -c \"d=[0.010,0.020,0.030]; print('total_ms=%.0f stop_dist_cm=%.1f'%(sum(d)*1000,sum(d)*1.0*100))\""
+    - "python3 -c \"t=0.06; print([(v,round(v*t*100,1)) for v in (0.5,1.0,2.0)])\""
+  checks:
+    - "python3 -c \"d=[0.010,0.020,0.030]; t=sum(d); assert abs(t-0.06)<1e-9 and abs(1.0*t*100-6.0)<1e-9\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "硬件急停回路能否用软件急停替代？"
+    options:
+      - "不能，一级急停必须独立于操作系统与软件"
+      - "能，软件更快"
+      - "能，只要日志完整"
+      - "取决于网络带宽"
+    answer: 0
+    explain: "软件卡死时，只有独立硬线回路可靠。"
+  - q: "急停复位后，正确的状态是？"
+    options:
+      - "回到 Idle，输出保持关闭，需人工重新使能"
+      - "直接恢复运行"
+      - "自动加速到原速度"
+      - "进入远程控制模式"
+    answer: 0
+    explain: "自动恢复运行在安全场景不可接受。"
+  - q: "大惯量设备选择停机类别时，直接切断动力可能造成？"
+    options:
+      - "机械冲击或结构损伤，需评估后选受控停机"
+      - "停机更快更安全"
+      - "没有任何影响"
+      - "降低通信延迟"
+    answer: 0
+    explain: "停机类别由风险评估决定，不是越急越好。"

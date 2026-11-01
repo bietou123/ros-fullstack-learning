@@ -1,0 +1,46 @@
+id: "S2-04"
+stage: "s2"
+title: "service 与 action"
+durationMin: 40
+type: "teach"
+output: "长任务 action"
+tags: ["action", "service"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s2-04-action"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 interface show example_interfaces/srv/AddTwoInts | head -n 6'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 action list --help | head -n 5 && ros2 service list --help | head -n 5'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 interface show example_interfaces/srv/AddTwoInts | grep -q int64'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 action --help | grep -q goal'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "长时间运行、需要看进度且可取消的任务，应该用？"
+    options:
+      - "topic"
+      - "service"
+      - "action"
+      - "param"
+    answer: 2
+    explain: "action 提供 goal、feedback、result 与取消。"
+  - q: "action server 的取消请求到达后，正确的做法是？"
+    options:
+      - "只把状态改成 canceled"
+      - "在 cancel_callback 里让实际动作真正停止"
+      - "忽略取消"
+      - "重启节点"
+    answer: 1
+    explain: "状态改成 canceled 但动作仍在执行，是最危险的情况。"
+  - q: "action 底层由什么组成？"
+    options:
+      - "一个独立的传输协议"
+      - "两个 service 加两个 topic"
+      - "一个 topic"
+      - "一个 param"
+    answer: 1
+    explain: "goal/result 走 service，feedback/status 走 topic。"

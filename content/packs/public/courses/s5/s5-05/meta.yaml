@@ -1,0 +1,44 @@
+id: "S5-05"
+stage: "s5"
+title: "挖掘机连杆 + IMU 外参标定"
+durationMin: 45
+type: "teach"
+output: "仿真标定结果"
+tags: ["连杆", "IMU外参", "约束优化"]
+sources: ["挖掘机连杆长度和imu外参标定.pdf", "约束优化方法标定挖掘机连杆长度和imu外参方法_参数外挂版.pdf", "C_现场踩坑"]
+experiment:
+  id: "s5-05-linkage"
+  ros: "none"
+  commands:
+    - "python3 -c \"import math; L1,L2=3.0,2.0; q1,q2=math.radians(30),math.radians(60); x=L1*math.cos(q1)+L2*math.cos(q1+q2); y=L1*math.sin(q1)+L2*math.sin(q1+q2); print('tip=(%.3f,%.3f)'%(x,y))\""
+    - "python3 -c \"import math; L=3.0; print('1deg_tip_err_cm=%.1f'%(L*math.radians(1)*100))\""
+    - "python3 -c \"import math; g=9.81; a=math.radians(90); c,s=math.cos(a),math.sin(a); sx,sy,sz=0.0,g,0.0; bx,by,bz=c*sx-s*sy, s*sx+c*sy, sz; print('sensor=(%.2f,%.2f,%.2f) body=(%.2f,%.2f,%.2f) norm=%.2f'%(sx,sy,sz,bx,by,bz,math.sqrt(bx*bx+by*by+bz*bz)))\""
+  checks:
+    - "python3 -c \"import math; L1,L2=3.0,2.0; q1,q2=math.radians(30),math.radians(60); x=L1*math.cos(q1)+L2*math.cos(q1+q2); y=L1*math.sin(q1)+L2*math.sin(q1+q2); g=9.81; a=math.radians(90); c,s=math.cos(a),math.sin(a); bx,by=c*0.0-s*g, s*0.0+c*g; assert abs(x-2.598)<0.01 and abs(y-3.5)<0.01 and abs(math.hypot(bx,by)-g)<1e-9\""
+  timeoutSec: 90
+  headless: true
+quiz:
+  - q: "同型号两台设备的 IMU 安装外参能否直接共用？"
+    options:
+      - "不能，装配差异要求逐台标定"
+      - "能，同型号必然一致"
+      - "只需共用零位角"
+      - "只需共用连杆长度"
+    answer: 0
+    explain: "安装角度和装配误差逐台不同，必须逐台标定。"
+  - q: "角度误差 1°、力臂 3 m 时，末端位置误差最接近？"
+    options:
+      - "约 5.2 cm"
+      - "约 5 mm"
+      - "约 0.5 m"
+      - "与角度无关"
+    answer: 0
+    explain: "3 m × 1°(弧度) ≈ 0.052 m。"
+  - q: "标定优化不加物理约束的主要风险是？"
+    options:
+      - "解出负长度、越界角度等不可能参数"
+      - "计算速度变慢"
+      - "残差一定变大"
+      - "无法读取数据"
+    answer: 0
+    explain: "数学上可行不代表物理上成立，要加长度与角度范围约束。"

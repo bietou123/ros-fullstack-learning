@@ -1,0 +1,46 @@
+id: "S2-03"
+stage: "s2"
+title: "rclpy 节点与 QoS"
+durationMin: 40
+type: "teach"
+output: "QoS 对照表"
+tags: ["QoS", "rclpy"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s2-03-qos"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 14 ros2 topic pub -r 5 /rl_demo std_msgs/msg/String \"{data: hi}\" --qos-reliability best_effort --qos-depth 5 >/dev/null 2>&1 &) && sleep 3 && timeout 6 ros2 topic info -v /rl_demo'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy; print(rclpy.__file__)\"'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 topic pub --help 2>&1 | grep -q qos-reliability'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy\"'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "best_effort 发布者与 reliable 订阅者之间会发生什么？"
+    options:
+      - "自动降级为 best_effort"
+      - "不建立连接，订阅端静默收不到"
+      - "报错退出"
+      - "自动改为 reliable"
+    answer: 1
+    explain: "可靠性不兼容且无报错，是最典型的 ROS2 静默故障。"
+  - q: "高频传感器数据推荐的 QoS 是？"
+    options:
+      - "reliable + keep_all"
+      - "best_effort + keep_last(较小)"
+      - "transient_local + reliable"
+      - "默认即可"
+    answer: 1
+    explain: "延迟优先、允许丢帧时可接受，避免队列积压。"
+  - q: "晚启动的节点也要拿到地图/配置，应该用？"
+    options:
+      - "volatile"
+      - "transient_local"
+      - "best_effort"
+      - "keep_all"
+    answer: 1
+    explain: "transient_local 会为晚加入的订阅者保留最后的数据。"

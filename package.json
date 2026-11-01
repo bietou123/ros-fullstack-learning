@@ -1,0 +1,28 @@
+{
+  "name": "ros-fullstack-learning",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.33.0",
+  "description": "工业机器人全栈学习系统（deb / exe / apk 三端同源）",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @rl/web dev",
+    "build": "pnpm build:content && pnpm --filter @rl/web build",
+    "build:content": "node scripts/build-pack.mjs",
+    "typecheck": "pnpm --filter @rl/core typecheck && pnpm --filter @rl/web typecheck",
+    "test": "pnpm --filter @rl/core test",
+    "scan": "node scripts/scan-secrets.mjs",
+    "gen:coverage": "node scripts/gen-coverage.mjs",
+    "package:exe": "node scripts/package-exe.mjs",
+    "package:deb": "bash scripts/package-deb.sh",
+    "package:apk": "node scripts/package-apk.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0",
+    "typescript": "^5.6.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "electron"]
+  }
+}

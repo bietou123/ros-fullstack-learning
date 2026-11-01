@@ -1,0 +1,43 @@
+id: "S7-05"
+stage: "s7"
+title: "路径跟踪与调参"
+durationMin: 40
+type: "teach"
+output: "调参表"
+tags: ["路径跟踪", "PurePursuit", "调参"]
+sources: ["06_软件部署与运维", "02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s7-05-pursuit"
+  ros: "none"
+  commands:
+    - "python3 -c \"y=0.5; L=2.0; k=2*y/L/L; print('curvature=%.3f radius=%.3f'%(k,1/k))\""
+    - "python3 -c \"import math; k=0.25; alat=1.0; print('v_max=%.2f'%math.sqrt(alat/k))\""
+  checks:
+    - "python3 -c \"import math; k=2*0.5/2.0/2.0; v=math.sqrt(1.0/k); assert abs(k-0.25)<1e-9 and abs(v-2.0)<1e-9\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "前视距离 lookahead 设得过小，典型现象是？"
+    options:
+      - "左右振荡、画龙"
+      - "切弯严重"
+      - "完全没有响应"
+      - "定位失效"
+    answer: 0
+    explain: "追得太紧会来回修正。"
+  - q: "lookahead 设得过大，典型现象是？"
+    options:
+      - "弯道切角、跟踪滞后"
+      - "高频振荡"
+      - "原地打转"
+      - "无法起步"
+    answer: 0
+    explain: "看得太远，转弯提前且不贴线。"
+  - q: "现场调参更合理的顺序是？"
+    options:
+      - "先确认定位/地图，再调速度与前视距离，最后调增益"
+      - "先调增益到最大"
+      - "随机组合参数试"
+      - "只调速度"
+    answer: 0
+    explain: "底层不对，上层调参没有意义。"

@@ -1,0 +1,42 @@
+id: "S6-05"
+stage: "s6"
+title: "看门狗与心跳"
+durationMin: 35
+type: "teach"
+output: "超时保护"
+tags: ["看门狗", "心跳", "超时"]
+sources: ["02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s6-05-watchdog"
+  ros: "none"
+  commands:
+    - "python3 -c \"hb=[0.0,0.05,0.10,0.30,0.35,0.40]; gaps=[b-a for a,b in zip(hb,hb[1:])]; print('max_gap=%.2f timeout=%s'%(max(gaps),max(gaps)>0.15))\""
+  checks:
+    - "python3 -c \"hb=[0.0,0.05,0.10,0.30,0.35,0.40]; gaps=[b-a for a,b in zip(hb,hb[1:])]; assert max(gaps)>0.15\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "看门狗的喂狗动作应该放在哪里？"
+    options:
+      - "控制循环完整执行一轮之后"
+      - "独立定时器线程里"
+      - "由另一个进程代喂"
+      - "程序启动时喂一次"
+    answer: 0
+    explain: "只有完成真实工作后喂狗，才能发现控制循环卡死。"
+  - q: "超时阈值设得过短，最直接的后果是？"
+    options:
+      - "正常调度抖动就误触发停机"
+      - "失联后反应变慢"
+      - "网络带宽增加"
+      - "没有影响"
+    answer: 0
+    explain: "阈值要覆盖实测抖动，通常取 3–5 个心跳周期。"
+  - q: "看门狗触发后，恢复应该怎么做？"
+    options:
+      - "进入故障状态，显式确认后才允许恢复"
+      - "自动恢复运行"
+      - "自动加速到原速度"
+      - "忽略即可"
+    answer: 0
+    explain: "原因未查明的自动恢复可能反复动作。"

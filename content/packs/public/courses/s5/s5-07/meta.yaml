@@ -1,0 +1,44 @@
+id: "S5-07"
+stage: "s5"
+title: "坐标系、欧拉序与符号核对"
+durationMin: 40
+type: "teach"
+output: "符号核对表"
+tags: ["坐标系", "欧拉角", "四元数"]
+sources: ["04_标定与算法", "C_现场踩坑"]
+experiment:
+  id: "s5-07-frames"
+  ros: "none"
+  commands:
+    - "python3 -c \"rx=lambda p:(p[0],-p[2],p[1]); ry=lambda p:(p[2],p[1],-p[0]); print('Rx_then_Ry=%s'%(ry(rx((1,0,0))),)); print('Ry_then_Rx=%s'%(rx(ry((1,0,0))),))\""
+    - "python3 -c \"import math; w=math.cos(math.radians(45)); s=math.sin(math.radians(45)); print('norm=%.6f'%(math.sqrt(w*w+s*s))); print('q=(%.4f,0,0,%.4f) -q=(%.4f,0,0,%.4f)'%(w,s,-w,-s))\""
+    - "python3 -c \"p_body=(1.0,0.0,0.0); p_cam=(-p_body[1],-p_body[2],p_body[0]); print('body_forward=%s -> cam_optical=%s'%(p_body,p_cam))\""
+  checks:
+    - "python3 -c \"rx=lambda p:(p[0],-p[2],p[1]); ry=lambda p:(p[2],p[1],-p[0]); import math; w=math.cos(math.radians(45)); s=math.sin(math.radians(45)); p=(1.0,0.0,0.0); assert ry(rx(p))!=(0,1,0) and abs(math.hypot(w,s)-1)<1e-9\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "只看「欧拉角 (30°, 45°, 60°)」会产生歧义，根本原因是？"
+    options:
+      - "没有写清旋转顺序与内外旋约定"
+      - "角度太小"
+      - "欧拉角不能表示旋转"
+      - "单位没有写"
+    answer: 0
+    explain: "不同顺序组合出不同姿态，必须显式约定。"
+  - q: "四元数 q 与 −q 的关系是？"
+    options:
+      - "表示同一个旋转"
+      - "表示相反旋转"
+      - "一个是单位四元数一个不是"
+      - "不能同时使用"
+    answer: 0
+    explain: "四元数对旋转是双覆盖，插值前要选同侧。"
+  - q: "机器人 body 系（前-左-上）与相机光学系（右-下-前）能直接混用吗？"
+    options:
+      - "不能，两者差一个固定旋转"
+      - "能，都是右手系"
+      - "能，只要单位一致"
+      - "取决于分辨率"
+    answer: 0
+    explain: "轴向定义不同，必须显式转换。"

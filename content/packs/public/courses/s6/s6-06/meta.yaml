@@ -1,0 +1,43 @@
+id: "S6-06"
+stage: "s6"
+title: "故障注入与恢复测试"
+durationMin: 40
+type: "teach"
+output: "6 类故障报告"
+tags: ["故障注入", "恢复测试", "安全"]
+sources: ["05_交付实施SOP", "C_现场踩坑"]
+experiment:
+  id: "s6-06-fault-injection"
+  ros: "none"
+  commands:
+    - "python3 -c \"now=10.0; stamps=[9.95,9.7]; ages=[round(now-t,2) for t in stamps]; print('ages=%s stale=%s'%(ages,[x>0.2 for x in ages]))\""
+    - "python3 -c \"misses=[0,1,0,1,1,1,1]; runs=[]; c=0; [(c:=c+1 if m else 0, runs.append(c)) for m in misses]; print('max_consecutive_miss=%d'%max(runs))\""
+  checks:
+    - "python3 -c \"misses=[0,1,0,1,1,1,1]; runs=[]; c=0; [(c:=c+1 if m else 0, runs.append(c)) for m in misses]; assert max(runs)==4\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "故障注入测试的核心目的是？"
+    options:
+      - "验证系统在故障下能否进入安全状态并正确恢复"
+      - "让系统尽量多出故障"
+      - "提高运行速度"
+      - "替代日常维护"
+    answer: 0
+    explain: "测试的是安全行为与恢复路径。"
+  - q: "只测试「进程被 kill」为什么不够？"
+    options:
+      - "断线、丢包、超时、异常输入、断电、资源耗尽的行为完全不同"
+      - "kill 命令不可靠"
+      - "进程不会崩溃"
+      - "测试一次就够"
+    answer: 0
+    explain: "不同故障暴露不同的失效路径。"
+  - q: "故障消除后，恢复阶段最重要的检查是？"
+    options:
+      - "是否回到 Idle、输出关闭且需显式确认"
+      - "CPU 是否下降"
+      - "日志是否变多"
+      - "网络是否更快"
+    answer: 0
+    explain: "恢复后直接运行是常见且危险的问题。"

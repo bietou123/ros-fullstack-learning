@@ -1,0 +1,42 @@
+id: "S6-07"
+stage: "s6"
+title: "安全验收清单"
+durationMin: 30
+type: "teach"
+output: "验收表"
+tags: ["验收", "安全", "交付"]
+sources: ["05_交付实施SOP", "03-安全设计与状态机.md"]
+experiment:
+  id: "s6-07-checklist"
+  ros: "none"
+  commands:
+    - "python3 -c \"chk=[{'item':'estop','method':'press','criteria':'power_off_lt_100ms','evidence':'log'},{'item':'watchdog','method':'kill','criteria':'stop_lt_1s','evidence':'log'}]; print('n=%d all_fields=%s'%(len(chk),all(k in i for i in chk for k in ('item','method','criteria','evidence'))))\""
+  checks:
+    - "python3 -c \"chk=[{'item':'estop','method':'press','criteria':'power_off_lt_100ms','evidence':'log'},{'item':'watchdog','method':'kill','criteria':'stop_lt_1s','evidence':'log'}]; assert all(k in i for i in chk for k in ('item','method','criteria','evidence'))\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "下面哪条验收判据是合格的？"
+    options:
+      - "断线后 1 s 内输出归零并进入 Fault"
+      - "断线处理正常"
+      - "延迟较低"
+      - "动作平稳"
+    answer: 0
+    explain: "判据必须可测量、可复现。"
+  - q: "验收证据通常应包含？"
+    options:
+      - "带时间戳的日志、截图/录屏和测试记录表"
+      - "口头确认即可"
+      - "只写「已检查」"
+      - "只看最终效果"
+    answer: 0
+    explain: "证据链决定验收能否追溯。"
+  - q: "对「不适用」的验收项，正确处理是？"
+    options:
+      - "注明原因并由复核人确认"
+      - "直接留空"
+      - "视为通过"
+      - "删除该项"
+    answer: 0
+    explain: "空着会被误认为已通过。"

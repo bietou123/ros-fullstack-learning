@@ -1,0 +1,50 @@
+id: "S9-07"
+stage: "s9"
+title: "演示前 72 小时清单"
+durationMin: 30
+type: "field"
+output: "倒计时清单"
+tags: ["演示", "倒计时", "检查清单"]
+sources: ["05_交付实施SOP", "01_产品与需求", "C_现场踩坑"]
+experiment:
+  id: "s9-07-countdown"
+  ros: "none"
+  commands:
+    - "python3 -c \"items=[('T-72','备件与工具到位','owner_a'),('T-48','全流程彩排','owner_b'),('T-24','场地与环境确认','owner_c'),('T-2','设备开机自检','owner_d')]; missing=[x for x in items if not all(x)]; print('items=%d missing=%s'%(len(items),missing))\""
+  checks:
+    - "python3 -c \"items=[('T-72','备件与工具到位','owner_a'),('T-48','全流程彩排','owner_b'),('T-24','场地与环境确认','owner_c'),('T-2','设备开机自检','owner_d')]; missing=[x for x in items if not all(x)]; assert len(items)==4 and not missing; print('COUNTDOWN_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "演示前 72 小时清单的核心作用是？"
+    options:
+      - "把不确定性提前暴露并逐项消掉"
+      - "让文档更厚"
+      - "增加会议数量"
+      - "替代技术验证"
+    answer: 0
+    explain: "越早发现问题，可选方案越多；最后一天只能赌。"
+  - q: "T-24 之后，合理的变更原则是？"
+    options:
+      - "只修阻断性问题，不做优化和升级"
+      - "抓紧时间升级到最新版"
+      - "随便改，反正能回滚"
+      - "全部推倒重来"
+    answer: 0
+    explain: "临近演示的变更会引入未验证风险，冻结是纪律。"
+  - q: "清单中的每一项至少应该包含？"
+    options:
+      - "负责人、截止节点、状态与证据"
+      - "只有事项名称"
+      - "只有截止时间"
+      - "只有负责人头像"
+    answer: 0
+    explain: "没有负责人和证据的清单无法追踪，也无法证明完成。"
+  - q: "备用方案（Plan B）应该什么时候验证？"
+    options:
+      - "演示前彩排时实际切换一次"
+      - "演示当天第一次使用"
+      - "只写在文档里，不必验证"
+      - "等出了问题再说"
+    answer: 0
+    explain: "没演练过的兜底方案，在压力下大概率用不起来。"

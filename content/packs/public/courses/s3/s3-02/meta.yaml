@@ -1,0 +1,45 @@
+id: "S3-02"
+stage: "s3"
+title: "xacro 参数化"
+durationMin: 35
+type: "teach"
+output: "参数化模型"
+tags: ["xacro", "参数化"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s3-02-xacro"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:property name=\\\"len\\\" value=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\${len} 0.1 0.1\\\"/></geometry><origin xyz=\\\"\\${len/2} 0 0\\\"/></visual></link></robot>\" > /tmp/m.xacro && xacro /tmp/m.xacro > /tmp/m.urdf && grep -o 'box size=\\\"[^\\\"]*' /tmp/m.urdf && check_urdf /tmp/m.urdf'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v xacro'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && xacro --help 2>&1 | grep -q xacro'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "xacro 文件根节点必须声明的命名空间是？"
+    options:
+      - "xmlns:ros"
+      - "xmlns:xacro=\"http://www.ros.org/wiki/xacro\""
+      - "xmlns:urdf"
+      - "不需要"
+    answer: 1
+    explain: "缺命名空间时 xacro 标签会被当作普通元素原样输出。"
+  - q: "命令行覆盖 xacro 变量的写法是？"
+    options:
+      - "xacro m.xacro len 2.5"
+      - "xacro m.xacro len:=2.5"
+      - "xacro m.xacro --len=2.5"
+      - "xacro m.xacro -l 2.5"
+    answer: 1
+    explain: "xacro 用 name:=value 传入参数。"
+  - q: "模型检查失败但报错行号对不上，应该？"
+    options:
+      - "重装 ROS"
+      - "先把 xacro 展开成 URDF，再用 check_urdf 检查展开后的文件"
+      - "改 xacro 文件格式"
+      - "忽略"
+    answer: 1
+    explain: "报错行号属于展开后的 URDF。"

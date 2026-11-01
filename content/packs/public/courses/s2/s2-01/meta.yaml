@@ -1,0 +1,46 @@
+id: "S2-01"
+stage: "s2"
+title: "ROS2 架构：DDS 与节点发现"
+durationMin: 30
+type: "teach"
+output: "发现机制实验"
+tags: ["ROS2", "DDS"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s2-01-discovery"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && echo $ROS_DISTRO && ros2 --help | head -n 3'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 14 ros2 topic pub -r 5 /rl_demo std_msgs/msg/String \"{data: hi}\" >/dev/null 2>&1 &) && sleep 4 && timeout 6 ros2 node list && timeout 6 ros2 topic list -t | head -n 10; true'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && echo $ROS_DISTRO | grep -q humble'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 topic list | grep -q rosout'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "ROS2 没有 roscore，节点靠什么发现彼此？"
+    options:
+      - "一个隐藏的中央服务器"
+      - "DDS 的自动发现机制（常用 UDP 组播）"
+      - "DNS"
+      - "手工配置节点列表"
+    answer: 1
+    explain: "DDS 负责发现与传输，不需要中央 master。"
+  - q: "两台机器在同一个网段，但 `ros2 node list` 互相看不到，最可能的原因是？"
+    options:
+      - "ROS2 版本不同"
+      - "ROS_DOMAIN_ID 不同或组播被交换机/防火墙挡住"
+      - "机器性能不足"
+      - "没装 rviz"
+    answer: 1
+    explain: "域号不同即不同频道；组播被挡则根本发现不了。"
+  - q: "`ROS_LOCALHOST_ONLY=1` 适合什么场景？"
+    options:
+      - "生产环境跨机通信"
+      - "同机调试，避免被现场网络或其它机器干扰"
+      - "提高跨机带宽"
+      - "替代 QoS"
+    answer: 1
+    explain: "它把发现限制在本地，调试有用，上线需确认是否需要跨机。"

@@ -1,0 +1,53 @@
+id: "S0-06"
+stage: "s0"
+title: "Docker：镜像、容器、挂载、网络"
+durationMin: 45
+type: "teach"
+output: "ROS 容器跑通"
+tags: ["Docker", "环境"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s0-06-docker"
+  ros: "none"
+  commands:
+    - "docker --version"
+    - "docker info --format '{{.ServerVersion}}'"
+    - "docker run --rm hello-world"
+  checks:
+    - "docker info --format '{{.ServerVersion}}' | grep -q ."
+    - "docker image inspect hello-world >/dev/null 2>&1"
+  timeoutSec: 180
+  headless: true
+quiz:
+  - q: "容器与虚拟机最本质的区别是？"
+    options:
+      - "容器更贵"
+      - "容器共享宿主机内核，不是完整的操作系统"
+      - "容器不能联网"
+      - "容器不能持久化数据"
+    answer: 1
+    explain: "容器隔离进程/文件系统等，但共享内核。"
+  - q: "`docker run --rm -it image bash` 中 `--rm` 的作用是？"
+    options:
+      - "删除镜像"
+      - "容器退出后自动删除容器"
+      - "强制重启容器"
+      - "以 root 运行"
+    answer: 1
+    explain: "--rm 清理停止的容器，避免堆积。"
+  - q: "容器内产生的文件在容器删除后丢失，正确做法是？"
+    options:
+      - "每次退出前拷贝"
+      - "挂载宿主机目录或使用数据卷"
+      - "把容器改成特权模式"
+      - "关闭 --rm"
+    answer: 1
+    explain: "持久化数据必须落在卷或挂载目录。"
+  - q: "`--network host` 在哪种宿主机上才与宿主机共享网络栈？"
+    options:
+      - "Windows 和 macOS 的 Docker Desktop"
+      - "Linux 宿主机"
+      - "所有平台行为一致"
+      - "只有 ARM 平台"
+    answer: 1
+    explain: "Docker Desktop 通过虚拟机转发，host 网络语义不同。"

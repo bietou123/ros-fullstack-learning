@@ -1,0 +1,33 @@
+id: "S4-03"
+stage: "s4"
+title: "CANopen 基础"
+durationMin: 30
+type: "teach"
+output: "PDO / SDO 练习"
+tags: ["CANopen", "PDO"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+quiz:
+  - q: "CANopen 中 SDO 与 PDO 的主要区别是？"
+    options:
+      - "SDO 用于实时周期数据，PDO 用于配置"
+      - "SDO 是带确认的配置读写，PDO 是无确认的周期数据"
+      - "两者完全等价"
+      - "PDO 只能读"
+    answer: 1
+    explain: "配置用 SDO，实时数据用 PDO。"
+  - q: "对象字典中 0x6040 通常表示？"
+    options:
+      - "状态字"
+      - "控制字 Controlword"
+      - "实际位置"
+      - "心跳"
+    answer: 1
+    explain: "0x6040 控制字，0x6041 状态字。"
+  - q: "用 SDO 周期性发送控制指令会导致？"
+    options:
+      - "更实时"
+      - "握手开销大、延迟高、挤占带宽"
+      - "没有影响"
+      - "自动转成 PDO"
+    answer: 1
+    explain: "周期控制必须用 PDO。"

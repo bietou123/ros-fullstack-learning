@@ -1,0 +1,46 @@
+id: "S3-04"
+stage: "s3"
+title: "RViz 与 robot_state_publisher"
+durationMin: 30
+type: "teach"
+output: "可视化"
+tags: ["RViz", "joint_states"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s3-04-rviz"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep robot_state_publisher'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -c joint_state_publisher; true'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q robot_state_publisher'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 topic --help | grep -q list'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "`robot_state_publisher` 的输入是？"
+    options:
+      - "图像"
+      - "URDF 与 /joint_states"
+      - "CAN 报文"
+      - "点云"
+    answer: 1
+    explain: "它把模型结构与关节状态合成为 TF。"
+  - q: "URDF 关节名与 joint_states 中的名字不一致会怎样？"
+    options:
+      - "自动纠正"
+      - "该关节被静默忽略，模型部分不动"
+      - "程序崩溃"
+      - "提示报错"
+    answer: 1
+    explain: "这种不匹配通常没有任何报错，很难查。"
+  - q: "现场监视界面应该用什么驱动 /joint_states？"
+    options:
+      - "joint_state_publisher_gui 手工滑条"
+      - "真实编码器数据"
+      - "随机数"
+      - "不发布"
+    answer: 1
+    explain: "滑条只是调试工具，监视必须用真实数据。"

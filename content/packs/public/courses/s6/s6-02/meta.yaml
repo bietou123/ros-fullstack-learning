@@ -1,0 +1,43 @@
+id: "S6-02"
+stage: "s6"
+title: "限幅与斜坡"
+durationMin: 35
+type: "teach"
+output: "限幅器"
+tags: ["限幅", "斜坡", "速率限制"]
+sources: ["02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s6-02-rate-limit"
+  ros: "none"
+  commands:
+    - "python3 -c \"lim=lambda x,lo,hi:max(lo,min(hi,x)); print([lim(v,-1.0,1.0) for v in (-2,-0.5,0,0.5,2)])\""
+    - "python3 -c \"out=0.0; tgt=1.0; rate=0.1; seq=[]; [(out:=out+max(-rate,min(rate,tgt-out)), seq.append(round(out,3))) for _ in range(8)]; print(seq)\""
+  checks:
+    - "python3 -c \"out=0.0; tgt=1.0; rate=0.1; seq=[]; [(out:=out+max(-rate,min(rate,tgt-out)), seq.append(out)) for _ in range(20)]; assert all(b>=a for a,b in zip(seq,seq[1:])) and abs(seq[-1]-1.0)<1e-9\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "限幅和斜坡的核心区别是？"
+    options:
+      - "限幅限制幅值，斜坡限制变化率"
+      - "两者完全等价"
+      - "限幅只用于位置，斜坡只用于速度"
+      - "斜坡比限幅更安全"
+    answer: 0
+    explain: "一个管「最多多大」，一个管「多快能变」。"
+  - q: "斜坡参数写成「每周期最多 0.1」，主要风险是？"
+    options:
+      - "控制周期变化后实际速率随之改变"
+      - "计算量过大"
+      - "无法编译"
+      - "一定会超调"
+    answer: 0
+    explain: "应按每秒速率乘以 dt，避免依赖周期。"
+  - q: "关节限位只检查命令端、不检查反馈端，风险是？"
+    options:
+      - "反馈已越界时无法发现，软件限幅兜不住"
+      - "响应变慢"
+      - "带宽增加"
+      - "没有风险"
+    answer: 0
+    explain: "外部力、漂移都可能让实际位置超限。"

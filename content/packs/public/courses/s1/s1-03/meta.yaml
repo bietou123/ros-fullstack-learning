@@ -1,0 +1,45 @@
+id: "S1-03"
+stage: "s1"
+title: "编写第一个节点（rospy）"
+durationMin: 40
+type: "teach"
+output: "发布者 / 订阅者"
+tags: ["rospy", "节点"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s1-03-rospy"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && python3 -c \"import rospy; print(rospy.__file__)\"'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 8 rostopic pub -r 5 /rl_chat std_msgs/String \"data: hi\" >/dev/null 2>&1 &) && sleep 2 && timeout 5 rostopic echo -n 2 /rl_chat; true'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && python3 -c \"import rospy\"'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && python3 -c \"from std_msgs.msg import String; print(String._type)\"'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "`rospy.init_node()` 的作用是？"
+    options:
+      - "启动 roscore"
+      - "把当前进程注册为 ROS 节点并获得名字"
+      - "编译包"
+      - "订阅所有话题"
+    answer: 1
+    explain: "没有 init_node，节点无法与 master 交互。"
+  - q: "`rospy.Rate(5)` 中 `sleep()` 未调用会导致？"
+    options:
+      - "程序无法启动"
+      - "循环全速空转，发布频率远超设定"
+      - "节点自动退出"
+      - "没有任何影响"
+    answer: 1
+    explain: "Rate 只提供等待，不 sleep 就不限速。"
+  - q: "Publisher 的 `queue_size` 过小时，高频下的行为是？"
+    options:
+      - "自动提高频率"
+      - "超出队列的旧消息被丢弃（丢帧）"
+      - "节点崩溃"
+      - "自动降低发布频率"
+    answer: 1
+    explain: "队列满时丢弃旧消息是设计行为，需要按链路能力设定。"

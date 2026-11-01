@@ -1,0 +1,50 @@
+id: "S8-05"
+stage: "s8"
+title: "rosbag 复盘诊断"
+durationMin: 35
+type: "teach"
+output: "复盘报告"
+tags: ["rosbag", "复盘", "诊断"]
+sources: ["06_软件部署与运维", "E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s8-05-bag"
+  ros: "none"
+  commands:
+    - "python3 -c \"lines=['rosbag2_bagfile_information:','  message_count: 1200','  duration:','    nanoseconds: 60000000000','  topics_with_message_count:','    - topic_metadata:','        name: /imu','      message_count: 1000']; open('/tmp/m.yaml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/m.yaml'))['rosbag2_bagfile_information']; dur=d['duration']['nanoseconds']/1e9; print('dur_s=%.0f count=%d rate=%.1f'%(dur,d['message_count'],d['topics_with_message_count'][0]['message_count']/dur))\""
+  checks:
+    - "python3 -c \"lines=['rosbag2_bagfile_information:','  message_count: 1200','  duration:','    nanoseconds: 60000000000','  topics_with_message_count:','    - topic_metadata:','        name: /imu','      message_count: 1000']; open('/tmp/m.yaml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/m.yaml'))['rosbag2_bagfile_information']; rate=d['topics_with_message_count'][0]['message_count']/(d['duration']['nanoseconds']/1e9); assert abs(rate-16.67)<0.1; print('BAG_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "回放 bag 时算法行为与现场不一致，最可能的原因是？"
+    options:
+      - "没有统一使用 bag 时间（--clock / use_sim_time）"
+      - "bag 文件太大"
+      - "没有压缩"
+      - "没有分片"
+    answer: 0
+    explain: "节点若用系统墙钟，回放事件顺序与时间戳都对不上。"
+  - q: "判定 bag 频率是否正常，最直接看什么？"
+    options:
+      - "话题消息数 ÷ 录制时长"
+      - "文件大小"
+      - "文件数量"
+      - "压缩比"
+    answer: 0
+    explain: "频率 = 消息数 / 时长，再与传感器标称频率对照。"
+  - q: "一份合格的复盘报告必须包含？"
+    options:
+      - "具体时间点、具体话题、具体数值与复现方法"
+      - "一句「可能是 XX 问题」"
+      - "参与人员名单"
+      - "设备采购价格"
+    answer: 0
+    explain: "没有数据与复现方法，报告无法被验证也无法被复用。"
+  - q: "bag 中发现时间戳非单调，最应该先怀疑？"
+    options:
+      - "多源时钟未同步"
+      - "磁盘太小"
+      - "录制的消息太多"
+      - "回放速率太低"
+    answer: 0
+    explain: "不同源时钟各自走时会造成时间倒退或跳变，需先查时间同步。"

@@ -1,0 +1,50 @@
+id: "S10-03"
+stage: "s10"
+title: "座舱指令与安全状态机"
+durationMin: 45
+type: "teach"
+output: "指令链路"
+tags: ["状态机", "指令链路", "安全"]
+sources: ["03-安全设计与状态机.md", "02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s10-03-fsm"
+  ros: "none"
+  commands:
+    - "python3 -c \"from itertools import accumulate; trans={'idle':{'arm':'ready'},'ready':{'start':'running','disarm':'idle'},'running':{'stop':'ready','timeout':'fault'},'fault':{'reset':'idle'}}; ev=['arm','start','timeout','start','reset','arm']; states=list(accumulate(ev, lambda s,e: trans.get(s,{}).get(e,s), initial='idle'))[1:]; rej=sum(1 for a,b in zip(['idle']+states[:-1],states) if a==b); print('states=%s rejected=%d'%(states,rej))\""
+  checks:
+    - "python3 -c \"from itertools import accumulate; trans={'idle':{'arm':'ready'},'ready':{'start':'running','disarm':'idle'},'running':{'stop':'ready','timeout':'fault'},'fault':{'reset':'idle'}}; ev=['arm','start','timeout','start','reset','arm']; states=list(accumulate(ev, lambda s,e: trans.get(s,{}).get(e,s), initial='idle'))[1:]; rej=sum(1 for a,b in zip(['idle']+states[:-1],states) if a==b); assert states[2]=='fault' and states[3]=='fault' and rej==1; print('FSM_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "远控运行中，操作端心跳超时，状态机应该？"
+    options:
+      - "进入故障态并立即把输出归零"
+      - "保持上一条指令"
+      - "自动加速等待重连"
+      - "忽略超时"
+    answer: 0
+    explain: "控制链路断开必须进入安全状态，不能保持最后指令。"
+  - q: "进入故障态后，正确的恢复方式是？"
+    options:
+      - "确认原因消除后显式 reset"
+      - "自动恢复"
+      - "按启动键直接运行"
+      - "重启界面即可"
+    answer: 0
+    explain: "故障要锁存，避免原因未消除时再次运行。"
+  - q: "低优先级指令遇到高优先级状态时，应该？"
+    options:
+      - "被拒绝，不能覆盖高优先级"
+      - "直接覆盖"
+      - "各执行一半"
+      - "随机选择"
+    answer: 0
+    explain: "优先级必须写死，否则安全行为不可预测。"
+  - q: "急停功能应该由谁实现？"
+    options:
+      - "独立硬线安全回路，软件只做状态镜像"
+      - "完全由软件状态机实现"
+      - "由远程操作端实现"
+      - "由日志系统实现"
+    answer: 0
+    explain: "急停不能依赖应用软件存活，必须独立于软件控制链路。"

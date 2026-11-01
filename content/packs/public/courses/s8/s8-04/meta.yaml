@@ -1,0 +1,44 @@
+id: "S8-04"
+stage: "s8"
+title: "日志体系与排障"
+durationMin: 35
+type: "teach"
+output: "日志检索"
+tags: ["日志", "排障", "可观测性"]
+sources: ["06_软件部署与运维", "E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s8-04-logs"
+  ros: "none"
+  commands:
+    - "journalctl -n 5 --no-pager"
+    - "journalctl --disk-usage"
+    - "python3 -c \"import json; L=[{'ts':1,'lvl':'INFO','msg':'start'},{'ts':2,'lvl':'ERROR','msg':'timeout'}]; open('/tmp/l.jsonl','w').write(chr(10).join(json.dumps(x) for x in L)); rows=[json.loads(s) for s in open('/tmp/l.jsonl')]; print(len(rows),[r['msg'] for r in rows if r['lvl']=='ERROR'])\""
+  checks:
+    - "python3 -c \"import json; L=[{'ts':1,'lvl':'INFO','msg':'start'},{'ts':2,'lvl':'ERROR','msg':'timeout'}]; open('/tmp/l.jsonl','w').write(chr(10).join(json.dumps(x) for x in L)); rows=[json.loads(s) for s in open('/tmp/l.jsonl')]; errs=[r for r in rows if r['lvl']=='ERROR']; assert len(rows)==2 and errs[0]['msg']=='timeout'\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "日志中最不应该出现的是？"
+    options:
+      - "明文密码或令牌"
+      - "时间戳"
+      - "组件名"
+      - "错误码"
+    answer: 0
+    explain: "日志常被转发和长期保存，泄露面很大。"
+  - q: "在分布式系统里串联一次任务，最关键的是？"
+    options:
+      - "关联 ID（correlation id）"
+      - "日志文件更大"
+      - "颜色更醒目"
+      - "打印更多细节"
+    answer: 0
+    explain: "没有关联 ID 无法把多节点日志拼起来。"
+  - q: "配置日志轮转的主要目的是？"
+    options:
+      - "防止日志写满磁盘"
+      - "提高日志可读性"
+      - "加密日志"
+      - "提高 CPU 频率"
+    answer: 0
+    explain: "磁盘写满本身就可能造成停机故障。"

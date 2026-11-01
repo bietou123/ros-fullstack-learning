@@ -1,0 +1,43 @@
+id: "S5-02"
+stage: "s5"
+title: "LiDAR 驱动与点云"
+durationMin: 35
+type: "teach"
+output: "点云可视化"
+tags: ["LiDAR", "点云", "PointCloud2"]
+sources: ["B_设备与型号速查", "激光-本体外参标定使用手册.pdf", "C_现场踩坑"]
+experiment:
+  id: "s5-02-pcd"
+  ros: "none"
+  commands:
+    - "python3 -c \"import math,random; random.seed(7); pts=[(random.uniform(-10,10),random.uniform(-10,10),random.uniform(-1,1)) for _ in range(120)]; r=[math.hypot(x,y) for x,y,z in pts]; b=[sum(1 for v in r if lo<=v<hi) for lo,hi in ((0,5),(5,10),(10,15))]; print('buckets=%s total=%d'%(b,sum(b)))\""
+    - "python3 -c \"import math,random; random.seed(7); pts=[(random.uniform(-10,10),random.uniform(-10,10)) for _ in range(120)]; keep=[p for p in pts if math.hypot(*p)>=0.5]; print('kept=%d dropped=%d'%(len(keep),len(pts)-len(keep)))\""
+  checks:
+    - "python3 -c \"import math,random; random.seed(7); pts=[(random.uniform(-10,10),random.uniform(-10,10),random.uniform(-1,1)) for _ in range(120)]; r=[math.hypot(x,y) for x,y,z in pts]; b=[sum(1 for v in r if lo<=v<hi) for lo,hi in ((0,5),(5,10),(10,15))]; assert sum(b)==120 and min(r)>=0\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "PointCloud2 中 `frame_id` 的作用是？"
+    options:
+      - "告诉 TF 这帧点云在哪个坐标系"
+      - "标定点云的点数"
+      - "指定网络端口"
+      - "设置雷达转速"
+    answer: 0
+    explain: "frame_id 决定 RViz 和下游算法用哪套坐标变换。"
+  - q: "点云每帧点数突然减半，最可能的原因是？"
+    options:
+      - "网络丢包或带宽不足"
+      - "雷达安装角度变了"
+      - "frame_id 写错"
+      - "点云被压缩"
+    answer: 0
+    explain: "点数减少通常是数据没完整到达，先查链路。"
+  - q: "运动时扫描到的墙面出现「重影」，优先怀疑？"
+    options:
+      - "时间戳不准或未做运动畸变校正"
+      - "点云颜色设置错误"
+      - "雷达功率过高"
+      - "终端电阻缺失"
+    answer: 0
+    explain: "旋转雷达逐点扫描，运动中需要按时间补偿。"

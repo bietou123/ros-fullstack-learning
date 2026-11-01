@@ -1,0 +1,44 @@
+id: "S8-02"
+stage: "s8"
+title: "systemd 服务化与开机自启"
+durationMin: 35
+type: "teach"
+output: "服务单元"
+tags: ["systemd", "自启动", "运维"]
+sources: ["06_软件部署与运维", "E_ROS与Linux命令手册"]
+experiment:
+  id: "s8-02-systemd"
+  ros: "none"
+  commands:
+    - "systemctl is-system-running"
+    - "systemctl list-units --type=service --state=running --no-pager | head"
+    - "printf '[Unit]\\nDescription=rl test\\n[Service]\\nExecStart=/bin/true\\n[Install]\\nWantedBy=multi-user.target\\n' > /tmp/rl-test.service; systemd-analyze verify /tmp/rl-test.service; echo EXIT=$?"
+  checks:
+    - "printf '[Unit]\\nDescription=rl test\\n[Service]\\nExecStart=/bin/true\\n[Install]\\nWantedBy=multi-user.target\\n' > /tmp/rl-test.service; systemd-analyze verify /tmp/rl-test.service"
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "让服务开机自启，正确的做法是？"
+    options:
+      - "systemctl enable --now <服务>"
+      - "只执行 start"
+      - "只执行 restart"
+      - "把命令写进桌面启动器"
+    answer: 0
+    explain: "enable 建立开机链接，--now 同时立即启动。"
+  - q: "Restart=on-failure 的行为是？"
+    options:
+      - "异常退出时重启，正常退出不重启"
+      - "任何情况都重启"
+      - "从不重启"
+      - "只在开机时重启"
+    answer: 0
+    explain: "正常退出被视为预期结束。"
+  - q: "服务启动即失败，最先应该看什么？"
+    options:
+      - "systemctl status 与 journalctl -u 的日志"
+      - "重装系统"
+      - "换一台电脑"
+      - "调大内存"
+    answer: 0
+    explain: "日志通常会直接给出路径/权限/参数错误。"

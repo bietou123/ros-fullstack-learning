@@ -1,0 +1,42 @@
+id: "S6-03"
+stage: "s6"
+title: "状态机设计"
+durationMin: 40
+type: "teach"
+output: "三态机"
+tags: ["状态机", "FSM", "故障恢复"]
+sources: ["03-安全设计与状态机.md", "02_架构与协议"]
+experiment:
+  id: "s6-03-fsm"
+  ros: "none"
+  commands:
+    - "python3 -c \"T={('idle','start'):'running',('running','stop'):'idle',('running','fault'):'fault',('fault','reset'):'idle'}; s='idle'; seq=[s]; [(s:=T.get((s,e),s), seq.append(s)) for e in ('start','fault','start','reset')]; print(seq)\""
+  checks:
+    - "python3 -c \"T={('idle','start'):'running',('running','stop'):'idle',('running','fault'):'fault',('fault','reset'):'idle'}; s='idle'; seq=[s]; [(s:=T.get((s,e),s), seq.append(s)) for e in ('start','fault','start','reset')]; assert seq==['idle','running','fault','fault','idle']\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "状态机收到一个未定义的转移事件时，正确做法是？"
+    options:
+      - "拒绝转移并记录日志"
+      - "静默忽略"
+      - "强行进入目标状态"
+      - "重启程序"
+    answer: 0
+    explain: "静默忽略会让现场无法解释「为什么没动作」。"
+  - q: "多个节点各自维护一份运行状态，主要风险是？"
+    options:
+      - "状态不一致，产生冲突动作"
+      - "网络带宽变高"
+      - "CPU 占用降低"
+      - "没有风险"
+    answer: 0
+    explain: "必须有唯一权威状态源，其他节点订阅。"
+  - q: "Fault 状态恢复到 Running 的正确方式是？"
+    options:
+      - "必须先显式 reset 并经守卫检查"
+      - "故障消失后自动恢复"
+      - "直接按启动即可"
+      - "重启节点即可"
+    answer: 0
+    explain: "自动恢复在安全场景是危险行为。"

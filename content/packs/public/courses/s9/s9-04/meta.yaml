@@ -1,0 +1,42 @@
+id: "S9-04"
+stage: "s9"
+title: "演示脚本编写"
+durationMin: 30
+type: "teach"
+output: "5 分钟脚本"
+tags: ["演示", "脚本", "彩排"]
+sources: ["05_交付实施SOP", "01_产品与需求", "C_现场踩坑"]
+experiment:
+  id: "s9-04-demo-script"
+  ros: "none"
+  commands:
+    - "python3 -c \"seg=[('intro',30),('connect',40),('basic_move',90),('precision',60),('safety_stop',50),('qa',30)]; total=sum(s for _,s in seg); print('total_s=%d segments=%d max_seg=%d'%(total,len(seg),max(s for _,s in seg)))\""
+  checks:
+    - "python3 -c \"seg=[('intro',30),('connect',40),('basic_move',90),('precision',60),('safety_stop',50),('qa',30)]; total=sum(s for _,s in seg); mx=max(s for _,s in seg); assert total==300 and mx<=120; print('DEMO_OK')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "五分钟演示最重要的三个证明是？"
+    options:
+      - "能力、安全、可重复"
+      - "参数、型号、价格"
+      - "人多、灯亮、声音大"
+      - "功能越多越好"
+    answer: 0
+    explain: "演示是证明，不是功能清单；安全和可重复比堆功能更有说服力。"
+  - q: "每个演示片段都应该写明？"
+    options:
+      - "目的、操作、预期画面、失败兜底"
+      - "只有操作步骤"
+      - "只有讲解词"
+      - "只有时长"
+    answer: 0
+    explain: "没有兜底的片段就是现场风险点。"
+  - q: "演示总时长通常应控制在可用时间的？"
+    options:
+      - "不超过 80%，留出意外余量"
+      - "刚好 100%"
+      - "超过 120%"
+      - "越短越好，不必排练"
+    answer: 0
+    explain: "切换、意外、问答都会吃时间，必须预留冗余。"

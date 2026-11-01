@@ -1,0 +1,45 @@
+id: "S3-01"
+stage: "s3"
+title: "URDF 基础：link 与 joint"
+durationMin: 35
+type: "teach"
+output: "三连杆模型"
+tags: ["URDF", "建模"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s3-01-urdf"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot name=\\\"rl_demo\\\"><link name=\\\"base_link\\\"/><link name=\\\"arm_link\\\"/><joint name=\\\"arm_joint\\\" type=\\\"revolute\\\"><parent link=\\\"base_link\\\"/><child link=\\\"arm_link\\\"/><origin xyz=\\\"0 0 0.5\\\"/><axis xyz=\\\"0 1 0\\\"/><limit lower=\\\"-1.57\\\" upper=\\\"1.57\\\" effort=\\\"100\\\" velocity=\\\"1.0\\\"/></joint></robot>\" > /tmp/demo.urdf && check_urdf /tmp/demo.urdf'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v check_urdf'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q urdf'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "URDF 中 `<joint>` 的 `<origin>` 表示？"
+    options:
+      - "世界坐标"
+      - "子 link 相对父 link 的位姿"
+      - "关节角度"
+      - "质心位置"
+    answer: 1
+    explain: "origin 是父子之间的变换，不是世界坐标。"
+  - q: "revolute 关节缺少 `<limit>` 会怎样？"
+    options:
+      - "自动无限位"
+      - "校验报错或不可用，必须显式给出限位"
+      - "自动变成 fixed"
+      - "没有影响"
+    answer: 1
+    explain: "有限位的关节必须声明 lower/upper/effort/velocity。"
+  - q: "URDF 为什么无法表达四连杆闭环？"
+    options:
+      - "XML 不支持"
+      - "URDF 是树结构，每个 link 只能有一个父 joint"
+      - "精度不够"
+      - "性能太差"
+    answer: 1
+    explain: "闭环需要图结构，URDF 只支持树。"

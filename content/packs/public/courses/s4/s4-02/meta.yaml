@@ -1,0 +1,43 @@
+id: "S4-02"
+stage: "s4"
+title: "SocketCAN 与 vcan 实战"
+durationMin: 45
+type: "teach"
+output: "收发脚本"
+tags: ["SocketCAN", "vcan"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s4-02-vcan"
+  ros: "none"
+  commands:
+    - "python3 -c \"import socket; print(hasattr(socket, 'AF_CAN'), hasattr(socket, 'CAN_RAW'))\""
+    - "ip -details link show vcan0 2>/dev/null || echo 'no vcan0 (需按课程第 3 节创建)'"
+  checks:
+    - "python3 -c \"import socket; assert hasattr(socket, 'AF_CAN')\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "vcan 的主要用途是？"
+    options:
+      - "替代真实 CAN 控制器驱动"
+      - "在同一台 Linux 上模拟 CAN 总线，用于开发与测试"
+      - "提高 CAN 波特率"
+      - "加密 CAN 报文"
+    answer: 1
+    explain: "vcan 是虚拟 CAN 接口，不做真实时序与仲裁。"
+  - q: "`cansend vcan0 123#DEADBEEF` 发送的内容是？"
+    options:
+      - "ID=0x123，数据 4 字节"
+      - "ID=0xDEADBEEF"
+      - "文本字符串"
+      - "5 字节数据"
+    answer: 0
+    explain: "# 前是 ID，# 后是十六进制数据字节。"
+  - q: "容器内创建 vcan 失败，最可能缺什么？"
+    options:
+      - "磁盘空间"
+      - "CAP_NET_ADMIN 权限"
+      - "显卡驱动"
+      - "Python"
+    answer: 1
+    explain: "创建网络接口需要网络管理能力。"

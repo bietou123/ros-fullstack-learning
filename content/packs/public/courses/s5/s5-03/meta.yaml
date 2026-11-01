@@ -1,0 +1,51 @@
+id: "S5-03"
+stage: "s5"
+title: "Camera 驱动与图像管线"
+durationMin: 30
+type: "teach"
+output: "图像延迟测量"
+tags: ["Camera", "延迟", "图像管线"]
+sources: ["03_硬件与电气", "C_现场踩坑"]
+experiment:
+  id: "s5-03-camera-latency"
+  ros: "none"
+  commands:
+    - "python3 -c \"import random; random.seed(3); lat=[max(0,random.gauss(25,8)) for _ in range(1000)]; s=sorted(lat); print('p50=%.1f p99=%.1f max=%.1f'%(s[500],s[990],s[-1]))\""
+    - "python3 -c \"fps=30; base=20.0; print('depth1=%.1fms depth5=%.1fms'%(base+1000/fps, base+5*1000/fps))\""
+  checks:
+    - "python3 -c \"import random; random.seed(3); lat=[max(0,random.gauss(25,8)) for _ in range(1000)]; s=sorted(lat); assert s[990]>s[500]\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "评估远控图像延迟，正确的口径是？"
+    options:
+      - "曝光/采集时刻到算法输出时刻的时间差"
+      - "画面看起来卡不卡"
+      - "CPU 占用率"
+      - "分辨率高低"
+    answer: 0
+    explain: "延迟必须用时间戳定义，肉眼判断不可靠。"
+  - q: "图像缓冲队列加深，通常会导致？"
+    options:
+      - "延迟增加，画面更平滑"
+      - "延迟降低"
+      - "没有影响"
+      - "带宽减半"
+    answer: 0
+    explain: "深缓冲用「旧画面」换流畅，控制场景要慎用。"
+  - q: "控制场景中不建议依赖自动曝光，原因是？"
+    options:
+      - "会引起帧率与延迟波动"
+      - "会让分辨率下降"
+      - "会自动关闭相机"
+      - "会改变镜头焦距"
+    answer: 0
+    explain: "自动曝光调整曝光时间，直接影响帧间隔与延迟。"
+  - q: "给图像打时间戳，应该用哪个时刻？"
+    options:
+      - "曝光/采集时刻"
+      - "发布时刻"
+      - "算法处理完成时刻"
+      - "日志写入时刻"
+    answer: 0
+    explain: "算法需要采样时刻，发布时刻只能反映处理延迟。"

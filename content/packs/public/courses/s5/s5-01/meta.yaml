@@ -1,0 +1,43 @@
+id: "S5-01"
+stage: "s5"
+title: "IMU 原理、噪声与安装方向"
+durationMin: 35
+type: "teach"
+output: "静止噪声测试"
+tags: ["IMU", "噪声", "安装方向"]
+sources: ["04_标定与算法", "C_现场踩坑"]
+experiment:
+  id: "s5-01-imu-noise"
+  ros: "none"
+  commands:
+    - "python3 -c \"import random,statistics; random.seed(42); xs=[random.gauss(0,0.02) for _ in range(2000)]; print('mean=%.5f'%statistics.mean(xs)); print('std=%.5f'%statistics.stdev(xs))\""
+    - "python3 -c \"import random,statistics; random.seed(42); xs=[random.gauss(0,0.02) for _ in range(2000)]; ys=[sum(xs[i:i+10])/10 for i in range(0,2000,10)]; print('raw_std=%.5f avg10_std=%.5f'%(statistics.stdev(xs),statistics.stdev(ys)))\""
+  checks:
+    - "python3 -c \"import random,statistics; random.seed(42); xs=[random.gauss(0,0.02) for _ in range(2000)]; ys=[sum(xs[i:i+10])/10 for i in range(0,2000,10)]; assert abs(statistics.stdev(xs)-0.02)<0.002 and statistics.stdev(ys)<statistics.stdev(xs)/2\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "陀螺仪姿态长期漂移的主要原因是？"
+    options:
+      - "零偏被积分累积"
+      - "加速度计没有输出"
+      - "采样率太高"
+      - "温度太低"
+    answer: 0
+    explain: "角速度积分时，零偏也一起被积分，时间越长误差越大。"
+  - q: "6 轴 IMU 与 9 轴 IMU 的关键差别是？"
+    options:
+      - "是否带磁力计"
+      - "是否带陀螺仪"
+      - "是否带加速度计"
+      - "是否有温度传感器"
+    answer: 0
+    explain: "6 轴=陀螺+加速度；9 轴再加磁力计。"
+  - q: "IMU 安装方向装错，最典型的现象是？"
+    options:
+      - "设备前进，姿态却显示后退或横滚"
+      - "完全收不到数据"
+      - "时间戳停止更新"
+      - "采样频率翻倍"
+    answer: 0
+    explain: "轴映射错误会让方向整体反转，数据本身看起来「正常」。"

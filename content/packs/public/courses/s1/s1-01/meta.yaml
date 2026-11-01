@@ -1,0 +1,45 @@
+id: "S1-01"
+stage: "s1"
+title: "ROS1 世界观：master / node / topic"
+durationMin: 30
+type: "teach"
+output: "节点图"
+tags: ["ROS1", "核心概念"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s1-01-nodes"
+  ros: "ros1"
+  image: "ros:noetic-ros-base"
+  commands:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rosversion -d && rospack find roscpp'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 8 rostopic pub -r 5 /rl_demo std_msgs/String \"data: hello\" >/dev/null 2>&1 &) && sleep 2 && timeout 5 rostopic list && timeout 5 rosnode list; true'"
+  checks:
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rosversion -d | grep -q noetic'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find std_msgs | grep -q std_msgs'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "ROS1 中 master（roscore）的核心职责是？"
+    options:
+      - "转发所有消息数据"
+      - "登记节点与话题的名字，让节点能找到彼此"
+      - "控制机器人运动"
+      - "编译工作空间"
+    answer: 1
+    explain: "数据是节点直连传输的，master 只做名字注册与查询。"
+  - q: "`rosnode list` 里出现 `/rosout`，说明？"
+    options:
+      - "有人写了调试节点"
+      - "这是 roscore 启动时自带的日志汇聚节点，正常"
+      - "系统被入侵"
+      - "master 配置错误"
+    answer: 1
+    explain: "/rosout 是核心日志节点，几乎总是存在。"
+  - q: "两个节点都在跑，但订阅端收不到数据，最先该查什么？"
+    options:
+      - "重装 ROS"
+      - "用 rostopic info 确认真实话题名与类型是否一致"
+      - "换网线"
+      - "重启整个系统"
+    answer: 1
+    explain: "真名（含命名空间）与消息类型不一致是最常见原因。"

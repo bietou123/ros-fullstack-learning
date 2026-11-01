@@ -1,0 +1,53 @@
+id: "S8-03"
+stage: "s8"
+title: "网络、VPN 与远程接入"
+durationMin: 35
+type: "teach"
+output: "接入方案"
+tags: ["网络", "VPN", "远程接入"]
+sources: ["06_软件部署与运维", "E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s8-03-network"
+  ros: "none"
+  commands:
+    - "ss -lnt"
+    - "ip route"
+    - "getent hosts localhost"
+    - "ping -c 1 127.0.0.1"
+  checks:
+    - "ping -c 1 127.0.0.1 >/dev/null && getent hosts localhost >/dev/null && echo NET_OK"
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "远程接入最不应该的做法是？"
+    options:
+      - "把设备管理端口直接暴露到公网"
+      - "通过 VPN/跳板接入"
+      - "只开放必要端口"
+      - "保留连接审计"
+    answer: 0
+    explain: "管理端口直接暴露会显著扩大攻击面。"
+  - q: "VPN 的主要作用是？"
+    options:
+      - "在不可信网络上建立加密通道"
+      - "提高网络带宽"
+      - "替代防火墙"
+      - "降低 CPU 占用"
+    answer: 0
+    explain: "VPN 解决的是通路安全，不是加速。"
+  - q: "「连不上」时更合理的排查顺序是？"
+    options:
+      - "服务监听 → 本机路由/DNS → 防火墙/隧道 → 对端"
+      - "先重装系统"
+      - "先怀疑 VPN 厂商"
+      - "先换网线"
+    answer: 0
+    explain: "由近到远、由本机到外部逐层排除。"
+  - q: "远程控制链路断开时，设备正确的行为是？"
+    options:
+      - "按超时保护进入安全停机"
+      - "保持最后一条指令继续运行"
+      - "自动加速等待重连"
+      - "关闭所有日志"
+    answer: 0
+    explain: "断链后保持指令是典型危险行为。"

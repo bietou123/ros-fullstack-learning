@@ -1,0 +1,75 @@
+{
+  "name": "@rl/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "工业机器人全栈学习系统 · 桌面端（Windows / Linux）",
+  "author": "bietou123 <bietou123@users.noreply.github.com>",
+  "homepage": "https://github.com/bietou123/ros-fullstack-learning",
+  "license": "MIT",
+  "main": "main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "dist:win": "electron-builder --win nsis --x64",
+    "dist:deb": "electron-builder --linux deb",
+    "dist:dir": "electron-builder --dir"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.rosfullstack.learning",
+    "productName": "IndustrialRoboticsLearning",
+    "copyright": "MIT",
+    "directories": {
+      "output": "../../dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "web/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "IndustryRoboticsLearning-${version}-${arch}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "工业机器人全栈学习"
+    },
+    "linux": {
+      "target": [
+        "deb"
+      ],
+      "category": "Education",
+      "executableName": "ros-fullstack-learning",
+      "artifactName": "ros-fullstack-learning_${version}_${arch}.${ext}",
+      "maintainer": "bietou123 <bietou123@users.noreply.github.com>",
+      "desktop": {
+        "Name": "工业机器人全栈学习",
+        "Comment": "Industrial robotics full-stack learning, offline",
+        "Categories": "Education;Science;"
+      }
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ]
+    }
+  }
+}

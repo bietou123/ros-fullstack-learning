@@ -1,0 +1,52 @@
+id: "S0-02"
+stage: "s0"
+title: "Linux 终端最小必备"
+durationMin: 45
+type: "teach"
+output: "30 条命令实操"
+tags: ["Linux", "命令行"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s0-02-sandbox"
+  ros: "none"
+  commands:
+    - "rm -rf /tmp/rl-s02 && mkdir -p /tmp/rl-s02/logs && cd /tmp/rl-s02 && printf 'boot ok\\nimu timeout\\ncan error\\n' > logs/app.log && grep -n 'error' logs/app.log"
+    - "cd /tmp/rl-s02 && ls -la && du -sh logs && tail -n 2 logs/app.log"
+  checks:
+    - "test -f /tmp/rl-s02/logs/app.log"
+    - "grep -q 'can error' /tmp/rl-s02/logs/app.log"
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "要找出最近 60 分钟内修改过的 .log 文件，哪条命令正确？"
+    options:
+      - "ls *.log"
+      - "find . -name '*.log' -mmin -60"
+      - "grep *.log"
+      - "du -sh *.log"
+    answer: 1
+    explain: "find 的 -mmin 按修改时间筛选，-60 表示 60 分钟内。"
+  - q: "`ss -tlnp` 中 t、l、n、p 分别代表什么？"
+    options:
+      - "TCP、监听、数字显示地址端口、显示进程"
+      - "传输、日志、网络、路径"
+      - "测试、本地、新、进程"
+      - "TCP、长连接、命名、端口"
+    answer: 0
+    explain: "t=TCP，l=LISTEN，n=不做 DNS/服务名解析，p=显示进程。"
+  - q: "日志很长时，为什么先看第一次 error 而不是最后一条？"
+    options:
+      - "后面的日志不重要"
+      - "第一条错误往往最接近根因，后续多是连锁反应"
+      - "grep 只能匹配第一行"
+      - "最后一条一定是正常退出"
+    answer: 1
+    explain: "后续错误常由第一个错误引发，先定位源头效率最高。"
+  - q: "非 root 用户执行 `ss -tlnp` 看不到其他用户的进程名，怎么办？"
+    options:
+      - "重启系统"
+      - "改用 netstat 即可看到"
+      - "使用 sudo ss -tlnp"
+      - "把端口改到 1024 以下"
+    answer: 2
+    explain: "进程信息受权限限制，需要提权查看。"

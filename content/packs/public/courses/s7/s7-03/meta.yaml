@@ -1,0 +1,42 @@
+id: "S7-03"
+stage: "s7"
+title: "Nav2 架构"
+durationMin: 40
+type: "teach"
+output: "架构图"
+tags: ["Nav2", "行为树", "生命周期"]
+sources: ["06_软件部署与运维", "02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s7-03-nav2-bt"
+  ros: "none"
+  commands:
+    - "python3 -c \"seq=lambda x:'SUCCESS' if all(v=='SUCCESS' for v in x) else 'FAILURE'; fall=lambda x:'SUCCESS' if any(v=='SUCCESS' for v in x) else 'FAILURE'; print('seq=%s fall=%s'%(seq(['SUCCESS','FAILURE']),fall(['FAILURE','SUCCESS'])))\""
+  checks:
+    - "python3 -c \"seq=lambda x:'SUCCESS' if all(v=='SUCCESS' for v in x) else 'FAILURE'; fall=lambda x:'SUCCESS' if any(v=='SUCCESS' for v in x) else 'FAILURE'; assert seq(['SUCCESS','FAILURE'])=='FAILURE' and fall(['FAILURE','SUCCESS'])=='SUCCESS'\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "Nav2 中 `bt_navigator` 的主要职责是？"
+    options:
+      - "执行行为树，编排规划、控制与恢复"
+      - "直接输出电机速度"
+      - "发布静态地图"
+      - "完成传感器标定"
+    answer: 0
+    explain: "它是导航流程的调度者。"
+  - q: "全局规划器和局部控制器分别使用哪张代价地图？"
+    options:
+      - "全局代价地图 / 局部代价地图"
+      - "都只用静态地图"
+      - "都只用局部代价地图"
+      - "全局控制器 / 局部规划器"
+    answer: 0
+    explain: "规划看全局，避障看局部。"
+  - q: "Nav2 节点采用 lifecycle 管理，主要好处是？"
+    options:
+      - "受控地配置与激活，避免半启动状态"
+      - "减少节点数量"
+      - "提高通信带宽"
+      - "取代行为树"
+    answer: 0
+    explain: "参数错误能在 configure 阶段暴露。"

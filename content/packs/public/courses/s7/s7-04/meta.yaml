@@ -1,0 +1,50 @@
+id: "S7-04"
+stage: "s7"
+title: "代价地图"
+durationMin: 35
+type: "teach"
+output: "参数对照"
+tags: ["代价地图", "膨胀", "Nav2"]
+sources: ["06_软件部署与运维", "02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s7-04-costmap"
+  ros: "none"
+  commands:
+    - "python3 -c \"ri=0.2; ro=0.5; c=lambda d:254 if d<=ri else (0 if d>=ro else int(252*(ro-d)/(ro-ri))); print([(x,c(x)) for x in (0.1,0.2,0.35,0.5)])\""
+  checks:
+    - "python3 -c \"ri=0.2; ro=0.5; c=lambda d:254 if d<=ri else (0 if d>=ro else int(252*(ro-d)/(ro-ri))); assert c(0.1)==254 and c(0.35)==126 and c(0.5)==0\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "代价地图中数值 254 通常表示？"
+    options:
+      - "致命障碍（lethal）"
+      - "自由空间"
+      - "未知区域"
+      - "减速区"
+    answer: 0
+    explain: "253 内切、254 致命、255 未知。"
+  - q: "膨胀半径设得过大的直接后果是？"
+    options:
+      - "可行通道变窄，可能规划失败或绕远"
+      - "定位精度提高"
+      - "地图更新变快"
+      - "传感器视野变大"
+    answer: 0
+    explain: "膨胀把障碍周围都标成高代价。"
+  - q: "动态障碍消失后，局部代价地图仍长时间保留它，最可能是？"
+    options:
+      - "射线清除未生效或衰减时间过长"
+      - "膨胀半径太小"
+      - "地图分辨率太低"
+      - "机器人速度太快"
+    answer: 0
+    explain: "需要依靠传感器视野清除历史障碍。"
+  - q: "代价 253「内切障碍」的含义是？"
+    options:
+      - "机器人中心到达该格时轮廓必然与障碍相交"
+      - "该格是自由空间"
+      - "该格是未知区域"
+      - "该格只用于显示"
+    answer: 0
+    explain: "内切距离意味着中心到障碍小于轮廓半径。"

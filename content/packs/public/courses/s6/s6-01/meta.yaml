@@ -1,0 +1,43 @@
+id: "S6-01"
+stage: "s6"
+title: "遥操映射：手柄 → 关节速度"
+durationMin: 35
+type: "teach"
+output: "映射表"
+tags: ["遥操", "映射", "死区"]
+sources: ["02_架构与协议", "C_现场踩坑"]
+experiment:
+  id: "s6-01-mapping"
+  ros: "none"
+  commands:
+    - "python3 -c \"dz=0.1; x=0.55; y=0.0 if abs(x)<=dz else (1 if x>0 else -1)*(abs(x)-dz)/(1-dz); print('stick=%.2f out=%.3f vel=%.3f'%(x,y,2.0*y))\""
+    - "python3 -c \"dz=0.1; f=lambda x:0.0 if abs(x)<=dz else (1 if x>0 else -1)*(abs(x)-dz)/(1-dz); print([(x,round(f(x),3)) for x in (-1.0,-0.5,-0.1,0.0,0.1,0.5,1.0)])\""
+  checks:
+    - "python3 -c \"dz=0.1; f=lambda x:0.0 if abs(x)<=dz else (1 if x>0 else -1)*(abs(x)-dz)/(1-dz); assert f(0.05)==0 and abs(f(0.55)-0.5)<1e-9 and f(1.0)==1.0\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "遥操映射中死区的主要作用是？"
+    options:
+      - "过滤摇杆回中误差，避免松手漂移"
+      - "提高最大速度"
+      - "改变关节方向"
+      - "增加通信带宽"
+    answer: 0
+    explain: "摇杆回中不会精确为零，死区避免误输出。"
+  - q: "某关节的满杆速度应该由什么决定？"
+    options:
+      - "关节安全上限与操作需求中取较小值"
+      - "手柄厂商默认值"
+      - "越大越灵敏越好"
+      - "与关节无关"
+    answer: 0
+    explain: "先满足安全上限，再满足手感。"
+  - q: "操作手松开手柄后，正确的行为是？"
+    options:
+      - "输出归零，并配合超时保护"
+      - "保持最后速度"
+      - "缓慢加速"
+      - "由看门狗以外的方式决定"
+    answer: 0
+    explain: "松手必须停，超时未收到指令也必须停。"

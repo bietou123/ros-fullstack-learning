@@ -1,0 +1,42 @@
+id: "S3-05"
+stage: "s3"
+title: "挖掘机四连杆几何建模"
+durationMin: 40
+type: "teach"
+output: "几何草图"
+tags: ["连杆", "几何"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s3-05-linkage"
+  ros: "none"
+  commands:
+    - "python3 -c \"import math; a,b=1.0,1.2; l=math.sqrt(a*a+b*b-2*a*b*math.cos(math.radians(60))); back=math.degrees(math.acos((a*a+b*b-l*l)/(2*a*b))); print(round(l,4), round(back,3))\""
+  checks:
+    - "python3 -c \"import math; assert abs(math.degrees(math.acos(0.5))-60)<1e-9\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "由两铰点到转动中心距离与夹角求缸长，使用？"
+    options:
+      - "勾股定理"
+      - "余弦定理 l=sqrt(a²+b²-2ab·cosθ)"
+      - "正弦定理"
+      - "泰勒展开"
+    answer: 1
+    explain: "缸长与关节角构成三角形，用余弦定理。"
+  - q: "为什么铲斗的连杆机构不能直接写进 URDF？"
+    options:
+      - "URDF 不支持 XML"
+      - "URDF 是树，闭链四连杆需要图结构"
+      - "连杆太多"
+      - "没有标准的连杆类型"
+    answer: 1
+    explain: "每个 link 只能有一个父 joint，闭链无法表示。"
+  - q: "远控监视常用哪种四连杆处理方式？"
+    options:
+      - "物理引擎闭环仿真"
+      - "等效关节法：解算铲斗角，只发布等效关节"
+      - "忽略铲斗"
+      - "用球关节替代"
+    answer: 1
+    explain: "实时性好、稳定，适合监视与运动学。"

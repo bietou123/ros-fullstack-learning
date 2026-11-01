@@ -1,0 +1,43 @@
+id: "S4-05"
+stage: "s4"
+title: "PLC / VCU 报文与位域"
+durationMin: 40
+type: "teach"
+output: "位域解码器"
+tags: ["位域", "协议"]
+sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
+experiment:
+  id: "s4-05-bitfield"
+  ros: "none"
+  commands:
+    - "python3 -c \"v=int.from_bytes(bytes([0x2A,0x10]),'little'); print(v&3, bool((v>>2)&1), (v>>3)&3, (v>>5)*0.5)\""
+    - "python3 -c \"v=int.from_bytes(bytes([0x2A,0x10]),'big'); print(v&3, (v>>3)&3, (v>>5)*0.5)\""
+  checks:
+    - "python3 -c \"v=int.from_bytes(bytes([0x2A,0x10]),'little'); assert (v&3)==2 and ((v>>3)&3)==1 and (v>>5)*0.5==130.0\""
+  timeoutSec: 60
+  headless: true
+quiz:
+  - q: "解码位域前必须确认的三件事是？"
+    options:
+      - "CPU 型号、内存、磁盘"
+      - "字节序/位序、缩放因子与偏移、有无符号"
+      - "波特率、终端电阻、线长"
+      - "操作系统、Python 版本、时区"
+    answer: 1
+    explain: "这三项决定原始值如何变成物理量。"
+  - q: "只写了 decoder 没写 encoder，最大的问题在于？"
+    options:
+      - "代码变长"
+      - "无法做往返测试，错误只能等到现场暴露"
+      - "性能下降"
+      - "没有影响"
+    answer: 1
+    explain: "decode(encode(x))==x 是最有效的自检。"
+  - q: "发现某信号数值始终是应有值的一半，最可能？"
+    options:
+      - "线断了"
+      - "缩放因子不匹配"
+      - "波特率错"
+      - "终端电阻缺失"
+    answer: 1
+    explain: "成倍数偏差通常指向 scale/offset。"

@@ -1,0 +1,46 @@
+id: "S2-06"
+stage: "s2"
+title: "launch.py 与参数文件"
+durationMin: 30
+type: "teach"
+output: "多节点启动"
+tags: ["launch", "参数"]
+sources: ["E_ROS与Linux命令手册"]
+experiment:
+  id: "s2-06-launch"
+  ros: "ros2"
+  image: "ros:humble-ros-base"
+  network: "host"
+  commands:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 launch --help | head -n 6'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 param --help | head -n 6'"
+  checks:
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 launch --help | grep -q launch'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 param --help | grep -q dump'"
+  timeoutSec: 300
+  headless: true
+quiz:
+  - q: "参数优先级从低到高是？"
+    options:
+      - "命令行 > yaml > 包默认值"
+      - "包默认值 > yaml > 命令行"
+      - "yaml > 命令行 > 包默认值"
+      - "三者相同"
+    answer: 0
+    explain: "越靠近运行时的覆盖越强，yaml 覆盖默认值，命令行再覆盖 yaml。"
+  - q: "参数 yaml 中正确的键是？"
+    options:
+      - "parameters:"
+      - "ros__parameters:"
+      - "ros_parameters:"
+      - "params:"
+    answer: 1
+    explain: "节点名下必须是双下划线 ros__parameters。"
+  - q: "同一套节点要跑两套互不干扰的系统，应该用？"
+    options:
+      - "改话题名写死"
+      - "命名空间（PushRosNamespace）"
+      - "两个 ROS 安装"
+      - "两个 ROS_DOMAIN_ID 也可，但同一域内更常用命名空间"
+    answer: 1
+    explain: "命名空间让同一域内的两套节点话题自动隔离。"
