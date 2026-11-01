@@ -19,6 +19,7 @@
     "package:exe": "node scripts/package-exe.mjs",
     "package:deb": "bash scripts/package-deb.sh",
     "package:apk": "node scripts/package-apk.mjs",
+    "smoke:desktop": "node scripts/smoke-desktop.mjs",
     "verify": "node scripts/verify.mjs"
   },
   "devDependencies": {

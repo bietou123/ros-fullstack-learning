@@ -1,5 +1,7 @@
 # 工业机器人全栈学习系统
 
+[![verify](https://github.com/bietou123/ros-fullstack-learning/actions/workflows/verify.yml/badge.svg)](https://github.com/bietou123/ros-fullstack-learning/actions/workflows/verify.yml)
+
 面向工业机器人（含工程机械远控）交付工程师的离线全栈学习系统。同一套 React 前端与同一份内容包，构建为 Windows 桌面端、Linux 桌面端和 Android 平板端三个产物；学习功能完全一致，仅实验执行后端按平台适配。
 
 - 课程：S0–S10 共 11 个阶段、76 节课，每节 25–45 分钟
@@ -39,6 +41,7 @@ pnpm dev            # 浏览器开发模式
 | `pnpm package:exe` | 构建 Windows NSIS 安装包 |
 | `pnpm package:deb` | 构建 Linux deb（需 Linux/WSL，含 x64/arm64） |
 | `pnpm package:apk` | 构建签名 Android APK（需 JDK 17 + Android SDK） |
+| `pnpm smoke:desktop` | 构建并运行桌面端隐藏窗口冒烟；前缀 `RL_SMOKE_OFFLINE=1` 可强制断网并校验测验 |
 | `make verify` / `make package-exe` | 同上，命令行别名 |
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。
