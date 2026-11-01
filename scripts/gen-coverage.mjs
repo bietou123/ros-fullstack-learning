@@ -95,6 +95,47 @@ for (const r of rows) {
 }
 fs.writeFileSync(path.join(outDir, 'coverage.csv'), csv.join('\n') + '\n', 'utf8')
 
+// 课程级来源：以每节课 meta.yaml 的 sources 为准，避免把章级资料硬绑到单节课。
+const sourceNames = new Set(rows.map((r) => r.source))
+const chapterNames = new Set(rows.map((r) => r.chapter))
+const SOURCE_ALIASES = {
+  C_现场踩坑: 'C_现场踩坑与避雷清单.md',
+  E_ROS与Linux命令手册: 'E_ROS与Linux命令手册.md',
+  A_术语表: 'A_术语表.md',
+  B_设备与型号速查: 'B_设备与型号速查.md',
+  D_文档索引: 'D_文档索引.md',
+}
+
+function readLessonsMeta() {
+  const coursesRoot = path.join(root, 'content/packs/public/courses')
+  const out = []
+  for (const stage of fs.readdirSync(coursesRoot)) {
+    const stageDir = path.join(coursesRoot, stage)
+    if (!fs.statSync(stageDir).isDirectory()) continue
+    for (const dir of fs.readdirSync(stageDir)) {
+      const metaPath = path.join(stageDir, dir, 'meta.yaml')
+      if (!fs.existsSync(metaPath)) continue
+      const text = fs.readFileSync(metaPath, 'utf8')
+      const id = (text.match(/^id:\s*"?([^"\n]+)"?\s*$/m) || [])[1]
+      const raw = (text.match(/^sources:\s*(\[.*\])\s*$/m) || [])[1]
+      if (!id || !raw) throw new Error(`${metaPath} 缺少 id 或 sources`)
+      const sources = JSON.parse(raw).map((s) => SOURCE_ALIASES[s] || s)
+      const unknown = sources.filter((s) => !sourceNames.has(s) && !chapterNames.has(s))
+      if (unknown.length) throw new Error(`${id} 的来源无法解析：${unknown.join('、')}`)
+      if (!sources.length) throw new Error(`${id} 没有任何来源`)
+      out.push({ lesson: id, stage, sources })
+    }
+  }
+  return out.sort((a, b) => a.lesson.localeCompare(b.lesson, 'en', { numeric: true }))
+}
+
+const courseSources = readLessonsMeta()
+const lessonCsv = ['lesson,stage,source_count,sources']
+for (const r of courseSources) {
+  lessonCsv.push([r.lesson, r.stage, r.sources.length, r.sources.join('、')].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+}
+fs.writeFileSync(path.join(outDir, 'lesson-sources.csv'), lessonCsv.join('\n') + '\n', 'utf8')
+
 const byChapter = {}
 for (const r of rows) {
   byChapter[r.chapter] ??= { teach: 0, read: 0, field: 0 }

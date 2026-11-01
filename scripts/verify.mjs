@@ -144,10 +144,39 @@ check('覆盖率台账存在且无未映射资料', () => {
   const missing = rows.filter((r) => !r.lesson || r.lesson === '—')
   if (missing.length) throw new Error(`${missing.length} 份资料未映射课程：${missing.slice(0, 5).map((r) => r.source).join('、')}`)
   const lessonsCovered = new Set(rows.map((r) => r.lesson))
+  const declared = new Set(readLessonSources().map((r) => r.lesson))
   const packLessons = pack ? pack.lessons.map((l) => l.id) : []
-  const uncovered = packLessons.filter((id) => !lessonsCovered.has(id))
+  const uncovered = packLessons.filter((id) => !lessonsCovered.has(id) && !declared.has(id))
   if (uncovered.length) warnings.push(`无资料支撑的课程 ${uncovered.length} 节：${uncovered.slice(0, 6).join('、')}`)
-  return `${rows.length} 份资料 → ${lessonsCovered.size} 节课`
+  return `${rows.length} 份资料 → ${lessonsCovered.size} 节直接映射；${declared.size}/${packLessons.length} 节有来源声明`
+})
+
+check('课程来源声明完整', () => {
+  if (!pack) throw new Error('无内容包')
+  const csvPath = path.join(root, 'docs/coverage.csv')
+  const lessonPath = path.join(root, 'docs/lesson-sources.csv')
+  if (!fs.existsSync(lessonPath)) throw new Error('缺少 docs/lesson-sources.csv，先运行 pnpm gen:coverage')
+  const known = new Set()
+  for (const r of fs.readFileSync(csvPath, 'utf8').trim().split(/\r?\n/).slice(1).map(parseCsvLine)) {
+    known.add(r.source)
+    known.add(r.chapter)
+  }
+  const rows = readLessonSources()
+  if (rows.length !== pack.lessons.length) throw new Error(`来源声明 ${rows.length} 节，课程包 ${pack.lessons.length} 节`)
+  const byId = new Map(rows.map((r) => [r.lesson, r]))
+  const bad = []
+  for (const l of pack.lessons) {
+    const r = byId.get(l.id)
+    if (!r) bad.push(`${l.id} 缺少来源声明`)
+    else if (!r.sources.length) bad.push(`${l.id} 来源为空`)
+    else {
+      const unknown = r.sources.filter((s) => !known.has(s))
+      if (unknown.length) bad.push(`${l.id} 来源无法解析：${unknown.join('、')}`)
+    }
+  }
+  if (bad.length) throw new Error(bad.slice(0, 6).join('；') + (bad.length > 6 ? ` …共 ${bad.length} 项` : ''))
+  const total = rows.reduce((n, r) => n + r.sources.length, 0)
+  return `${rows.length}/${pack.lessons.length} 节 → ${total} 条来源关联`
 })
 
 check('敏感信息扫描', () => {
@@ -171,7 +200,7 @@ if (full) {
   }
 }
 
-function parseCsvLine(line) {
+function parseCsvRow(line) {
   const out = []
   let cur = ''
   let quoted = false
@@ -190,7 +219,26 @@ function parseCsvLine(line) {
     } else cur += c
   }
   out.push(cur)
+  return out
+}
+
+function parseCsvLine(line) {
+  const out = parseCsvRow(line)
   return { source: out[0], chapter: out[1], status: out[2], lesson: out[3], note: out[4] }
+}
+
+function readLessonSources() {
+  const file = path.join(root, 'docs/lesson-sources.csv')
+  if (!fs.existsSync(file)) return []
+  const lines = fs.readFileSync(file, 'utf8').trim().split(/\r?\n/)
+  const header = parseCsvRow(lines.shift())
+  const iLesson = header.indexOf('lesson')
+  const iSources = header.indexOf('sources')
+  if (iLesson < 0 || iSources < 0) throw new Error('lesson-sources.csv 缺少 lesson 或 sources 列')
+  return lines.filter((l) => l.trim()).map((line) => {
+    const r = parseCsvRow(line)
+    return { lesson: r[iLesson], sources: (r[iSources] || '').split('、').filter(Boolean) }
+  })
 }
 
 const width = Math.max(...checks.map((c) => c.name.length))
