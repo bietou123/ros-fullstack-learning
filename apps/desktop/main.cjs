@@ -88,7 +88,7 @@ async function runExperiment(spec) {
   return { backend, ok: stepsLocal.every((s) => s.code === 0) && checks.every((c) => c.ok), steps: stepsLocal, checks }
 }
 
-function createWindow(show = true) {
+function createWindow(show = true, offline = false) {
   const win = new BrowserWindow({
     width: 1360,
     height: 900,
@@ -111,6 +111,7 @@ function createWindow(show = true) {
     shell.openExternal(url)
     return { action: 'deny' }
   })
+  if (offline) win.webContents.session.enableNetworkEmulation({ offline: true })
   if (isDev) win.loadURL(process.env.VITE_DEV_SERVER_URL)
   else win.loadURL('app://bundle/index.html')
   return win
@@ -119,7 +120,8 @@ function createWindow(show = true) {
 async function runSmoke() {
   const outDir = process.env.RL_SMOKE_OUT || path.join(__dirname, 'smoke')
   fs.mkdirSync(outDir, { recursive: true })
-  const win = createWindow(false)
+  const offlineMode = Boolean(process.env.RL_SMOKE_OFFLINE)
+  const win = createWindow(false, offlineMode)
   win.webContents.once('did-finish-load', async () => {
     await new Promise((r) => setTimeout(r, 3000))
     const homeText = await win.webContents.executeJavaScript('document.body.innerText')
@@ -197,6 +199,24 @@ async function runSmoke() {
     await new Promise((r) => setTimeout(r, 400))
     const noteAfterDelete = await win.webContents.executeJavaScript("document.querySelectorAll('.note-item').length")
 
+    await win.webContents.executeJavaScript("location.hash = '#/lesson/S0-01'")
+    await new Promise((r) => setTimeout(r, 1200))
+    await win.webContents.executeJavaScript(
+      "[...document.querySelectorAll('.tabs button')].find((b) => b.textContent.includes('测验')).click()",
+    )
+    await new Promise((r) => setTimeout(r, 500))
+    const quizQuestions = await win.webContents.executeJavaScript("document.querySelectorAll('.quiz .question').length")
+    await win.webContents.executeJavaScript(
+      "document.querySelectorAll('.quiz .question').forEach((q) => { const r = q.querySelector('input[type=radio]'); if (r) r.click() })",
+    )
+    await new Promise((r) => setTimeout(r, 300))
+    await win.webContents.executeJavaScript(
+      "[...document.querySelectorAll('.quiz button')].find((b) => b.textContent.includes('提交答案')).click()",
+    )
+    await new Promise((r) => setTimeout(r, 1000))
+    const quizExplains = await win.webContents.executeJavaScript("document.querySelectorAll('.quiz .explain').length")
+    const quizText = await win.webContents.executeJavaScript('document.body.innerText')
+
     const result = {
       platform: 'desktop',
       homeOk: homeText.includes('工业机器人全栈'),
@@ -209,11 +229,13 @@ async function runSmoke() {
       hashOk,
       backend,
       experimentOk,
+      offline: offlineMode,
+      quizOk: quizQuestions >= 3 && quizExplains === quizQuestions && quizText.includes('得分'),
       notesOk: noteSaved === 1 && noteAfterReload === 1 && noteAfterDelete === 0,
     }
     console.log('SMOKE_RESULT ' + JSON.stringify(result))
     app.exit(
-      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.notesOk
+      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.quizOk && result.notesOk
         ? 0
         : 1,
     )
