@@ -166,8 +166,11 @@ function checkExe(file, sevenZip) {
   try {
     const out = path.join(tmp, 'exe')
     fs.mkdirSync(out, { recursive: true })
-    const r = spawnSync(sevenZip, ['x', file, 'resources\\app.asar', `-o${out}`, '-y'], { maxBuffer: 64 * 1024 * 1024 })
-    if (r.status !== 0) throw new Error(`7za 解包失败：${(r.stderr || '').toString().slice(0, 300)}`)
+    const r = spawnSync(sevenZip, ['x', file, `-o${out}`, '-y'], { maxBuffer: 256 * 1024 * 1024 })
+    if (r.status !== 0) {
+      const detail = `${r.stdout || ''}${r.stderr || ''}`.toString().trim().slice(0, 300)
+      throw new Error(`7za 解包失败（${r.status}）：${detail}`)
+    }
     const asarPath = findFile(out, 'app.asar')
     if (!asarPath) throw new Error('exe 内缺少 resources/app.asar')
     return checkAsar(asarPath, 'exe')
