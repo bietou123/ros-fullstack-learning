@@ -110,8 +110,15 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
   await (await db()).put('settings', { key, value })
 }
 
+// packs 的 keyPath 是 id，内容包本身只有 manifest.id，直接 put 会因取不到键而失败
+export function privatePackRecord(pack: unknown): Record<string, unknown> {
+  const id = (pack as { manifest?: { id?: unknown } } | null)?.manifest?.id
+  if (typeof id !== 'string' || !id) throw new Error('内容包缺少 manifest.id')
+  return { ...(pack as Record<string, unknown>), id }
+}
+
 export async function savePrivatePack(pack: unknown): Promise<void> {
-  await (await db()).put('packs', pack as never)
+  await (await db()).put('packs', privatePackRecord(pack) as never)
 }
 
 export async function listPrivatePacks(): Promise<unknown[]> {

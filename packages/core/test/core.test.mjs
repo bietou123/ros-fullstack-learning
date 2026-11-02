@@ -5,6 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { gradeQuiz, nextReview, makeQuizResult, dueReviews } from '../src/quiz.ts'
 import { computePackHash, verifyPack, packStats } from '../src/pack.ts'
+import { privatePackRecord } from '../src/store.ts'
 import { buildIndex, search, searchLessons } from '../src/search.ts'
 import { readOnlyAdapter, setPlatformAdapter, getPlatform, detectBackend, runExperiment } from '../src/platform.ts'
 
@@ -223,6 +224,17 @@ test('平台适配器：可切换，异常时降级为 failed 而非抛错', asy
   } finally {
     setPlatformAdapter(original)
   }
+})
+
+test('privatePackRecord：私有包存储键取自 manifest.id', () => {
+  const pack = makePack()
+  const row = privatePackRecord(pack)
+  assert.equal(row.id, 'rl.test')
+  assert.equal(row.manifest.id, 'rl.test')
+  assert.deepEqual(row.lessons, pack.lessons)
+
+  assert.throws(() => privatePackRecord({ manifest: {} }), /manifest\.id/)
+  assert.throws(() => privatePackRecord(null), /manifest\.id/)
 })
 
 test('构建脚本产出的内容包必须通过核心库校验（防哈希算法漂移）', (t) => {
