@@ -122,6 +122,12 @@ async function runSmoke() {
   fs.mkdirSync(outDir, { recursive: true })
   const offlineMode = Boolean(process.env.RL_SMOKE_OFFLINE)
   const win = createWindow(false, offlineMode)
+  const downloads = []
+  win.webContents.session.on('will-download', (_e, item) => {
+    const target = path.join(outDir, item.getFilename())
+    item.setSavePath(target)
+    downloads.push(target)
+  })
   win.webContents.on('console-message', (_e, _level, message) => {
     if (/error|uncaught|failed/i.test(String(message))) console.log('RENDERER ' + message)
   })
@@ -274,6 +280,11 @@ async function runSmoke() {
       const mediaOk = videoOk && imgOk
       location.hash = '#/settings'
       await wait(1000)
+      const expRow = demoRow()
+      const expBtn = expRow && [...expRow.querySelectorAll('button')].find((b) => b.textContent.trim() === '导出')
+      expBtn?.click()
+      await wait(1500)
+      const exportClicked = Boolean(expBtn)
       const pubRow = [...document.querySelectorAll('.pack-row')].find((r) => r.textContent.includes('rl.public.core'))
       const switchBack = pubRow && [...pubRow.querySelectorAll('button')].find((b) => b.textContent === '切换')
       switchBack?.click()
@@ -296,13 +307,21 @@ async function runSmoke() {
         return left
       })()
       const mediaCleaned = mediaLeft === 0
-      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, mediaImported, mediaOk, mediaCleaned, switchedBack: Boolean(switchBack), cleaned })
+      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, mediaImported, mediaOk, mediaCleaned, exportClicked, switchedBack: Boolean(switchBack), cleaned })
       } catch (e) {
         return JSON.stringify({ error: String(e), stack: e && e.stack })
       }
     })()`).catch((e) => JSON.stringify({ evalError: String(e) }))
     const pk = JSON.parse(privatePack)
-    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.mediaImported && pk.mediaOk && pk.mediaCleaned && pk.switchedBack && pk.cleaned
+    await new Promise((r) => setTimeout(r, 1000))
+    const exported = downloads[downloads.length - 1]
+    let exportOk = false
+    if (pk.exportClicked && exported && fs.existsSync(exported)) {
+      const buf = fs.readFileSync(exported)
+      exportOk = exported.endsWith('.zip') && buf.length > 0 && buf.includes('pack.json') && buf.includes('media/demo.mp4') && buf.includes('media/demo.png')
+    }
+    pk.exportOk = exportOk
+    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.mediaImported && pk.mediaOk && pk.mediaCleaned && pk.exportOk && pk.switchedBack && pk.cleaned
 
     await win.webContents.executeJavaScript("location.hash = '#/lesson/S0-01'")
     await new Promise((r) => setTimeout(r, 1200))

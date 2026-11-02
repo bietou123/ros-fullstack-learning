@@ -5,6 +5,7 @@ import {
   deletePackMedia,
   exportAll,
   importAll,
+  listPackMedia,
   listPrivatePacks,
   packMediaEntry,
   resetAll,
@@ -17,27 +18,26 @@ import { useApp } from '../store'
 
 declare const __APP_VERSION__: string
 
-async function download(name: string, text: string, type = 'application/json'): Promise<'shared' | 'downloaded'> {
+async function saveFile(
+  name: string,
+  data: string | Blob,
+  type: string,
+  share: { title: string; text: string },
+): Promise<'shared' | 'downloaded'> {
   const capacitor = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
   if (capacitor?.isNativePlatform?.()) {
     const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([
       import('@capacitor/filesystem'),
       import('@capacitor/share'),
     ])
-    const saved = await Filesystem.writeFile({
-      path: name,
-      data: text,
-      directory: Directory.Cache,
-      encoding: Encoding.UTF8,
-    })
-    await Share.share({
-      title: '工业机器人学习数据',
-      text: '在桌面端设置页导入此 JSON 以迁移学习数据。',
-      url: saved.uri,
-    })
+    const saved =
+      typeof data === 'string'
+        ? await Filesystem.writeFile({ path: name, data, directory: Directory.Cache, encoding: Encoding.UTF8 })
+        : await Filesystem.writeFile({ path: name, data: await blobToBase64(data), directory: Directory.Cache })
+    await Share.share({ title: share.title, text: share.text, url: saved.uri })
     return 'shared'
   }
-  const blob = new Blob([text], { type })
+  const blob = typeof data === 'string' ? new Blob([data], { type }) : data
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -45,6 +45,20 @@ async function download(name: string, text: string, type = 'application/json'): 
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
   return 'downloaded'
+}
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer())
+  let binary = ''
+  for (let i = 0; i < bytes.length; i += 0x8000) binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000))
+  return btoa(binary)
+}
+
+async function zipPack(pack: ContentPack, media: { path: string; blob: Blob }[]): Promise<Blob> {
+  const zip = new JSZip()
+  zip.file('pack.json', JSON.stringify(pack))
+  for (const m of media) zip.file(m.path, m.blob)
+  return zip.generateAsync({ type: 'blob' })
 }
 
 export default function SettingsPage() {
@@ -101,6 +115,26 @@ export default function SettingsPage() {
     }
   }
 
+  async function exportPack(p: ContentPack) {
+    try {
+      const media = await listPackMedia(p.manifest.id)
+      const base = `${p.manifest.id.replace(/[^\w.-]+/g, '_')}-${p.manifest.version}`
+      const how = media.length
+        ? await saveFile(`${base}.zip`, await zipPack(p, media), 'application/zip', {
+            title: '私有内容包',
+            text: '在另一台设备的设置页导入此 zip（含媒体）。',
+          })
+        : await saveFile(`${base}.json`, JSON.stringify(p), 'application/json', {
+            title: '私有内容包',
+            text: '在另一台设备的设置页导入此 JSON。',
+          })
+      setMsg(`已导出 ${p.manifest.id}${media.length ? `（含媒体 ${media.length} 个）` : ''}${how === 'shared' ? '，请在分享面板中保存' : ''}`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      if (!/cancel/i.test(message)) setMsg(`导出失败：${message}`)
+    }
+  }
+
   if (!pack) return null
 
   return (
@@ -141,6 +175,7 @@ export default function SettingsPage() {
               label={`${p.manifest.id} · v${p.manifest.version} · ${p.manifest.visibility}`}
               active={activePackId === p.manifest.id}
               onUse={() => switchPack(p.manifest.id)}
+              onExport={() => exportPack(p)}
               onDelete={async () => { await deletePrivatePack(p.manifest.id); await load(); await refresh() }}
             />
           ))}
@@ -155,7 +190,10 @@ export default function SettingsPage() {
         <div className="row gap">
           <button className="btn" onClick={async () => {
             try {
-              const how = await download(`ros-learning-data-${Date.now()}.json`, await exportAll())
+              const how = await saveFile(`ros-learning-data-${Date.now()}.json`, await exportAll(), 'application/json', {
+                title: '工业机器人学习数据',
+                text: '在桌面端设置页导入此 JSON 以迁移学习数据。',
+              })
               if (how === 'shared') setMsg('已生成学习数据文件，请在分享面板中保存或发送到桌面端。')
             } catch (err) {
               const message = err instanceof Error ? err.message : String(err)
@@ -211,7 +249,7 @@ export default function SettingsPage() {
   )
 }
 
-function PackRow({ id, label, active, onUse, onDelete }: { id: string; label: string; active: boolean; onUse: () => void; onDelete?: () => void }) {
+function PackRow({ id, label, active, onUse, onExport, onDelete }: { id: string; label: string; active: boolean; onUse: () => void; onExport?: () => void; onDelete?: () => void }) {
   return (
     <div className={`pack-row ${active ? 'active' : ''}`}>
       <div>
@@ -220,6 +258,7 @@ function PackRow({ id, label, active, onUse, onDelete }: { id: string; label: st
       </div>
       <div className="row gap">
         {active ? <span className="pill done">使用中</span> : <button className="btn small" onClick={onUse}>切换</button>}
+        {onExport && <button className="link" onClick={onExport}>导出</button>}
         {onDelete && <button className="link danger" onClick={onDelete}>删除</button>}
       </div>
     </div>

@@ -8,7 +8,7 @@ on:
       tag:
         description: Release tag to verify
         required: true
-        default: v0.1.5
+        default: v0.1.6
       ref:
         description: Source ref containing the verifier and content pack
         required: false
