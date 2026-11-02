@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { dueReviews, listQuizResults, packStats, type QuizResult } from '@rl/core'
+import StageQuiz from '../components/StageQuiz'
 import { useApp } from '../store'
 
 export default function Home({ stageId }: { stageId?: string }) {
@@ -42,6 +43,7 @@ export default function Home({ stageId }: { stageId?: string }) {
             )
           })}
         </div>
+        <StageQuiz stageId={stage.id} lessons={items} />
       </div>
     )
   }

@@ -50,6 +50,14 @@ export default function SettingsPage() {
   const dataRef = useRef<HTMLInputElement>(null)
   const [msg, setMsg] = useState('')
   const [verify, setVerify] = useState<{ ok: boolean; expected: string; actual: string } | null>(null)
+  const [build, setBuild] = useState<{ commit?: string; builtAt?: string } | null>(null)
+
+  useEffect(() => {
+    fetch('content/build-info.json')
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setBuild)
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (pack) setVerify(verifyPack(pack))
@@ -93,6 +101,7 @@ export default function SettingsPage() {
           <dt>内容包</dt><dd>{pack.manifest.id} · v{pack.manifest.version}</dd>
           <dt>内容哈希</dt><dd><code className="hash">{pack.manifest.hash}</code></dd>
           <dt>构建时间</dt><dd>{new Date(pack.manifest.builtAt).toLocaleString('zh-CN')}</dd>
+          <dt>构建 commit</dt><dd>{build?.commit ? <code>{build.commit}</code> : '未提供'}</dd>
           <dt>课程数</dt><dd>{pack.manifest.lessonCount} 节 / {pack.manifest.stageCount} 阶段</dd>
           <dt>哈希校验</dt>
           <dd className={verify?.ok ? 'ok' : 'bad'}>

@@ -6,7 +6,7 @@
 
 - 课程：S0–S10 共 11 个阶段、76 节课，每节 25–45 分钟
 - 每节课固定 9 段：现场类比 → 核心概念 → 可复制命令 → 动手实验 → 自动检查 → 常见故障 → 复盘题 → 关联资料 → 下一节
-- 功能：目录/正文/代码高亮/KaTeX、全文搜索、阅读进度、笔记、书签、测验、错题本、错题复习（SM-2）、学习数据导入导出
+- 功能：目录/正文/代码高亮/KaTeX、全文搜索、阅读进度、笔记、书签、测验、阶段测验、错题本、错题复习（SM-2）、学习数据导入导出
 - 离线优先：内容随安装包内置，不依赖网络与收费服务
 
 ## 三端产物
@@ -47,7 +47,7 @@ pnpm dev            # 浏览器开发模式
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。
 
-GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.3 -f ref=main`。
+GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.4 -f ref=main`。
 
 ## 构建三端
 
@@ -114,7 +114,7 @@ docs              资料盘点、能力矩阵、课程地图、ADR、里程碑�
 ## 已知限制
 
 - arm64 deb 尚无对应硬件实机验证；Android APK 已签名并校验内容哈希，并在 Android 34 x86_64 无窗口模拟器上完成启动、离线学习、进度落盘与数据导出/导入验证，但**未做 Android 真机启动验证**
-- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；v0.1.0 / v0.1.1 / v0.1.2 资产保持原样
+- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 资产保持原样
 - 依赖实车、真实 ROS 发行版、Docker 镜像或硬件的实验命令，课程内均标注「⚠ 未实测」；合成数据的自动检查可离线复现
 - 课程来源映射分两层：`docs/coverage.csv` 记录每份内部资料的直接归属，`docs/lesson-sources.csv` 记录每节课 `meta.yaml` 声明的来源；`pnpm verify` 要求 76/76 节均有可解析来源，但部分课程只到章级/通用手册，未逐文件对应到具体文档
 - Windows 安装包未做代码签名，首次运行可能出现 SmartScreen 提示

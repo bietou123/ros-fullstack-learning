@@ -96,6 +96,7 @@ export interface QuizResult {
   nextReviewAt: number
   intervalDays: number
   ease: number
+  kind?: 'lesson' | 'stage'
 }
 
 export interface Bookmark {

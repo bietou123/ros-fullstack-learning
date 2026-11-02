@@ -148,6 +148,10 @@ async function runSmoke() {
     await win.webContents.executeJavaScript("location.hash = '#/settings'")
     await new Promise((r) => setTimeout(r, 1200))
     const settingsText = await win.webContents.executeJavaScript('document.body.innerText')
+    const buildCommit = await win.webContents.executeJavaScript(
+      "fetch('content/build-info.json').then((r) => r.json()).then((j) => j.commit).catch(() => '')",
+    )
+    const commitShown = Boolean(buildCommit) && settingsText.includes(buildCommit)
 
     let backend = 'unknown'
     let experimentOk = false
@@ -282,6 +286,20 @@ async function runSmoke() {
     const wrongBookItems = await win.webContents.executeJavaScript("document.querySelectorAll('.wrong-item').length")
     const wrongBookText = await win.webContents.executeJavaScript('document.body.innerText')
 
+    await win.webContents.executeJavaScript("location.hash = '#/stage/s0'")
+    await new Promise((r) => setTimeout(r, 1500))
+    const stageQuestions = await win.webContents.executeJavaScript("document.querySelectorAll('.quiz .question').length")
+    await win.webContents.executeJavaScript(
+      "document.querySelectorAll('.quiz .question').forEach((q) => { const r = q.querySelector('input[type=radio]'); if (r) r.click() })",
+    )
+    await new Promise((r) => setTimeout(r, 300))
+    await win.webContents.executeJavaScript("document.querySelector('.quiz button')?.click()")
+    await new Promise((r) => setTimeout(r, 1200))
+    const stageText = await win.webContents.executeJavaScript('document.body.innerText')
+    await win.webContents.executeJavaScript("location.hash = '#/progress'")
+    await new Promise((r) => setTimeout(r, 1200))
+    const wrongAfterStage = await win.webContents.executeJavaScript("document.querySelectorAll('.wrong-item').length")
+
     const result = {
       platform: 'desktop',
       homeOk: homeText.includes('工业机器人全栈'),
@@ -291,19 +309,21 @@ async function runSmoke() {
       searchCards,
       progressOk: progressSvg > 0 && progressText.includes('能力进度'),
       settingsOk: settingsText.includes('内容包') && settingsText.includes('0.1.0'),
+      commitShown,
       hashOk,
       backend,
       experimentOk,
       offline: offlineMode,
       quizOk: quizQuestions >= 3 && quizExplains === quizQuestions && quizText.includes('得分'),
       wrongBookOk: wrongBookItems >= 1 && wrongBookText.includes('错题本'),
+      stageQuizOk: stageQuestions === 5 && stageText.includes('得分') && wrongAfterStage === wrongBookItems,
       notesOk: noteSaved === 1 && noteAfterReload === 1 && noteAfterDelete === 0,
       privatePackOk,
       privatePack: pk,
     }
     console.log('SMOKE_RESULT ' + JSON.stringify(result))
     app.exit(
-      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.quizOk && result.wrongBookOk && result.notesOk && result.privatePackOk
+      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.commitShown && result.hashOk && result.quizOk && result.wrongBookOk && result.stageQuizOk && result.notesOk && result.privatePackOk
         ? 0
         : 1,
     )

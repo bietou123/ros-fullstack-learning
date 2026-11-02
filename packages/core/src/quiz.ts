@@ -29,7 +29,12 @@ export function nextReview(result: { correct: number; total: number; ease?: numb
   return { nextReviewAt: now + intervalDays * 86400000, intervalDays, ease }
 }
 
-export function makeQuizResult(lessonId: string, answers: number[], out: GradeOutcome): QuizResult {
+export function makeQuizResult(
+  lessonId: string,
+  answers: number[],
+  out: GradeOutcome,
+  kind: 'lesson' | 'stage' = 'lesson',
+): QuizResult {
   const sched = nextReview(out)
   return {
     id: `${lessonId}-${Date.now()}`,
@@ -38,6 +43,7 @@ export function makeQuizResult(lessonId: string, answers: number[], out: GradeOu
     correct: out.correct,
     total: out.total,
     at: Date.now(),
+    kind,
     ...sched,
   }
 }
@@ -52,5 +58,7 @@ export function latestQuizResults(results: QuizResult[]): QuizResult[] {
 }
 
 export function dueReviews(results: QuizResult[], now = Date.now()): QuizResult[] {
-  return latestQuizResults(results).filter((r) => r.nextReviewAt <= now).sort((a, b) => a.nextReviewAt - b.nextReviewAt)
+  return latestQuizResults(results)
+    .filter((r) => (r.kind ?? 'lesson') === 'lesson' && r.nextReviewAt <= now)
+    .sort((a, b) => a.nextReviewAt - b.nextReviewAt)
 }

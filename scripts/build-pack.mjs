@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import { execFileSync } from 'node:child_process'
 import yaml from 'js-yaml'
 
 const root = path.resolve(import.meta.dirname, '..')
@@ -136,6 +137,14 @@ const mediaSrc = path.join(packRoot, 'media')
 const mediaDst = path.join(outDir, 'media')
 if (fs.existsSync(mediaSrc)) fs.cpSync(mediaSrc, mediaDst, { recursive: true })
 
+function gitCommit() {
+  try {
+    return execFileSync('git', ['rev-parse', '--short', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim() || 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
 const stats = {
   packId: manifest.id,
   version: manifest.version,
@@ -143,6 +152,8 @@ const stats = {
   lessons: lessons.length,
   stages: stages.length,
   bytes: fs.statSync(path.join(outDir, 'pack.json')).size,
+  commit: process.env.RL_GIT_COMMIT || gitCommit(),
+  builtAt: new Date().toISOString(),
 }
 fs.writeFileSync(path.join(outDir, 'build-info.json'), JSON.stringify(stats, null, 2), 'utf8')
 console.log(JSON.stringify(stats, null, 2))

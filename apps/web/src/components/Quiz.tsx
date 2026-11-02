@@ -2,7 +2,17 @@ import { useState } from 'react'
 import { addQuizResult, gradeQuiz, makeQuizResult, type QuizQuestion } from '@rl/core'
 import { useApp } from '../store'
 
-export default function Quiz({ lessonId, quiz }: { lessonId: string; quiz: QuizQuestion[] }) {
+export default function Quiz({
+  lessonId,
+  quiz,
+  kind = 'lesson',
+  onSubmitted,
+}: {
+  lessonId: string
+  quiz: QuizQuestion[]
+  kind?: 'lesson' | 'stage'
+  onSubmitted?: () => void
+}) {
   const { refresh } = useApp()
   const [answers, setAnswers] = useState<number[]>(quiz.map(() => -1))
   const [submitted, setSubmitted] = useState(false)
@@ -16,8 +26,9 @@ export default function Quiz({ lessonId, quiz }: { lessonId: string; quiz: QuizQ
     const out = gradeQuiz(quiz, answers)
     setOutcome(out)
     setSubmitted(true)
-    await addQuizResult(makeQuizResult(lessonId, answers, out))
+    await addQuizResult(makeQuizResult(lessonId, answers, out, kind))
     await refresh()
+    onSubmitted?.()
   }
 
   return (
@@ -60,7 +71,11 @@ export default function Quiz({ lessonId, quiz }: { lessonId: string; quiz: QuizQ
       ) : (
         <div className="card">
           <h3>得分 {outcome?.correct} / {outcome?.total}</h3>
-          <p className="muted">已加入间隔重复队列：满分 7 天后复习，60% 以上 3 天后，低于 60% 明天再来。</p>
+          <p className="muted">
+            {kind === 'stage'
+              ? '阶段测验结果会记录在本机，用于了解阶段掌握程度；不计入课程错题本与间隔重复。'
+              : '已加入间隔重复队列：满分 7 天后复习，60% 以上 3 天后，低于 60% 明天再来。'}
+          </p>
           <button
             className="btn"
             onClick={() => {

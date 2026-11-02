@@ -68,6 +68,12 @@ test('makeQuizResult 与 dueReviews：只取每课最新一次并按到期时间
   assert.deepEqual(r.answers, [1, 1, 0])
   assert.ok(r.id.startsWith('s1-01-'))
   assert.equal(r.intervalDays, 15)
+  assert.equal(r.kind, 'lesson')
+
+  const stage = makeQuizResult('s1', [0, 0, 0], gradeQuiz(quiz, [0, 0, 0]), 'stage')
+  assert.equal(stage.kind, 'stage')
+  const stageDue = dueReviews([{ ...stage, at: 9, nextReviewAt: now - DAY }], now)
+  assert.deepEqual(stageDue, [], '阶段测验不进入间隔重复队列')
 
   const results = [
     { lessonId: 'a', at: 1, nextReviewAt: now - DAY },
