@@ -197,8 +197,13 @@ async function runSmoke() {
       input.files = dt.files
       input.dispatchEvent(new Event('change', { bubbles: true }))
       const demoRow = () => [...document.querySelectorAll('.pack-row')].find((r) => r.textContent.includes('rl.smoke.demo'))
-      for (let i = 0; i < 60 && !demoRow(); i++) await wait(100)
-      const imported = demoRow()
+      let imported = null
+      for (let i = 0; i < 60; i++) {
+        const row = demoRow()
+        if (row && row.classList.contains('active')) { imported = row; break }
+        await wait(100)
+      }
+      imported = imported || demoRow()
       const active = Boolean(imported && imported.classList.contains('active'))
       const notice = document.querySelector('section.card .notice')?.textContent || ''
       location.hash = '#/lesson/S0-01'
@@ -272,6 +277,11 @@ async function runSmoke() {
     const quizExplains = await win.webContents.executeJavaScript("document.querySelectorAll('.quiz .explain').length")
     const quizText = await win.webContents.executeJavaScript('document.body.innerText')
 
+    await win.webContents.executeJavaScript("location.hash = '#/progress'")
+    await new Promise((r) => setTimeout(r, 1200))
+    const wrongBookItems = await win.webContents.executeJavaScript("document.querySelectorAll('.wrong-item').length")
+    const wrongBookText = await win.webContents.executeJavaScript('document.body.innerText')
+
     const result = {
       platform: 'desktop',
       homeOk: homeText.includes('工业机器人全栈'),
@@ -286,13 +296,14 @@ async function runSmoke() {
       experimentOk,
       offline: offlineMode,
       quizOk: quizQuestions >= 3 && quizExplains === quizQuestions && quizText.includes('得分'),
+      wrongBookOk: wrongBookItems >= 1 && wrongBookText.includes('错题本'),
       notesOk: noteSaved === 1 && noteAfterReload === 1 && noteAfterDelete === 0,
       privatePackOk,
       privatePack: pk,
     }
     console.log('SMOKE_RESULT ' + JSON.stringify(result))
     app.exit(
-      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.quizOk && result.notesOk && result.privatePackOk
+      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.quizOk && result.wrongBookOk && result.notesOk && result.privatePackOk
         ? 0
         : 1,
     )

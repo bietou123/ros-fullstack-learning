@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { dueReviews, listBookmarks, listNotes, listQuizResults, type QuizResult } from '@rl/core'
+import { dueReviews, latestQuizResults, listBookmarks, listNotes, listQuizResults, type QuizResult } from '@rl/core'
 import { useApp } from '../store'
 
 const DIMS: { name: string; ids: string[] }[] = [
@@ -40,6 +40,27 @@ export default function ProgressPage() {
     })
   }, [pack, progress])
 
+  const wrongItems = useMemo(() => {
+    if (!pack) return []
+    const items: { lessonId: string; title: string; q: string; chosen: string; answer: string; explain?: string }[] = []
+    for (const r of latestQuizResults(quiz)) {
+      const lesson = pack.lessons.find((l) => l.id === r.lessonId)
+      if (!lesson) continue
+      lesson.quiz.forEach((q, i) => {
+        if (r.answers[i] === q.answer) return
+        items.push({
+          lessonId: r.lessonId,
+          title: lesson.title,
+          q: q.q,
+          chosen: q.options[r.answers[i]] ?? '未作答',
+          answer: q.options[q.answer] ?? '',
+          explain: q.explain,
+        })
+      })
+    }
+    return items
+  }, [pack, quiz])
+
   if (!pack) return null
   const lessons = pack.lessons
   const done = lessons.filter((l) => progress[l.id]?.status === 'done').length
@@ -56,6 +77,7 @@ export default function ProgressPage() {
         <div className="kpi"><b>{done}/{lessons.length}</b><span>已完成课程</span></div>
         <div className="kpi"><b>{totalQuestions ? Math.round((totalCorrect / totalQuestions) * 100) : 0}%</b><span>测验正确率</span></div>
         <div className="kpi"><b>{due.length}</b><span>待复习</span></div>
+        <div className="kpi"><b>{wrongItems.length}</b><span>错题</span></div>
         <div className="kpi"><b>{notes}</b><span>笔记</span></div>
         <div className="kpi"><b>{marks}</b><span>收藏</span></div>
       </div>
@@ -87,6 +109,27 @@ export default function ProgressPage() {
           <div className="chips">{due.slice(0, 20).map((r) => <a key={r.id} className="chip" href={`#/lesson/${r.lessonId}`}>{r.lessonId}</a>)}</div>
         </section>
       )}
+
+      <section className="card">
+        <h3>错题本</h3>
+        {wrongItems.length === 0 ? (
+          <p className="muted">暂无错题。测验中答错的题目会按课程汇总到这里，重做后自动更新。</p>
+        ) : (
+          <div className="wrong-list">
+            {wrongItems.map((w, i) => (
+              <div className="wrong-item" key={`${w.lessonId}-${i}`}>
+                <a className="wrong-src" href={`#/lesson/${w.lessonId}`}>{w.lessonId} · {w.title}</a>
+                <p className="wrong-q">{w.q}</p>
+                <p className="wrong-answer">
+                  <span className="bad">你的答案：{w.chosen}</span>
+                  <span className="good">正确答案：{w.answer}</span>
+                </p>
+                {w.explain && <p className="muted wrong-explain">{w.explain}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }

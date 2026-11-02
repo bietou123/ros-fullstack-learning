@@ -42,11 +42,15 @@ export function makeQuizResult(lessonId: string, answers: number[], out: GradeOu
   }
 }
 
-export function dueReviews(results: QuizResult[], now = Date.now()): QuizResult[] {
+export function latestQuizResults(results: QuizResult[]): QuizResult[] {
   const latest = new Map<string, QuizResult>()
   for (const r of results) {
     const cur = latest.get(r.lessonId)
     if (!cur || r.at > cur.at) latest.set(r.lessonId, r)
   }
-  return [...latest.values()].filter((r) => r.nextReviewAt <= now).sort((a, b) => a.nextReviewAt - b.nextReviewAt)
+  return [...latest.values()]
+}
+
+export function dueReviews(results: QuizResult[], now = Date.now()): QuizResult[] {
+  return latestQuizResults(results).filter((r) => r.nextReviewAt <= now).sort((a, b) => a.nextReviewAt - b.nextReviewAt)
 }

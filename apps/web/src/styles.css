@@ -218,6 +218,15 @@ code { font-family: var(--mono); }
 .note-item p { margin: 0 0 6px; white-space: pre-wrap; }
 .note-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
 
+.wrong-list { display: grid; gap: 10px; }
+.wrong-item { background: var(--bg2); border: 1px solid var(--line); border-left: 3px solid var(--danger); border-radius: 8px; padding: 12px 14px; }
+.wrong-src { font-size: 12px; font-family: var(--mono); color: var(--accent2); }
+.wrong-q { margin: 6px 0; font-size: 14px; }
+.wrong-answer { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; font-size: 13px; }
+.wrong-answer span.bad { color: #ffa198; }
+.wrong-answer span.good { color: #7ee787; }
+.wrong-explain { margin: 6px 0 0; font-size: 12px; }
+
 .experiment .exp-head { display: flex; justify-content: space-between; align-items: center; }
 .kv { display: grid; grid-template-columns: 120px 1fr; gap: 8px 16px; margin: 12px 0; font-size: 13px; }
 .kv dt { color: var(--muted); }

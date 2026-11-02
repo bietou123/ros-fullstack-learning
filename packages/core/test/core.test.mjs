@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { gradeQuiz, nextReview, makeQuizResult, dueReviews } from '../src/quiz.ts'
+import { gradeQuiz, nextReview, makeQuizResult, dueReviews, latestQuizResults } from '../src/quiz.ts'
 import { computePackHash, verifyPack, packStats } from '../src/pack.ts'
 import { privatePackRecord } from '../src/store.ts'
 import { buildIndex, search, searchLessons } from '../src/search.ts'
@@ -77,6 +77,20 @@ test('makeQuizResult 与 dueReviews：只取每课最新一次并按到期时间
   ]
   const due = dueReviews(results, now)
   assert.deepEqual(due.map((x) => x.lessonId), ['c', 'b'])
+})
+
+test('latestQuizResults：每课只保留最新一次，不受到期时间影响', () => {
+  const results = [
+    { lessonId: 'a', at: 1, nextReviewAt: 9, correct: 0, total: 3, answers: [0, 0, 0] },
+    { lessonId: 'a', at: 5, nextReviewAt: 20, correct: 3, total: 3, answers: [1, 1, 1] },
+    { lessonId: 'b', at: 3, nextReviewAt: 30, correct: 2, total: 3, answers: [1, 0, 1] },
+  ]
+  const latest = latestQuizResults(results)
+  assert.equal(latest.length, 2)
+  const a = latest.find((r) => r.lessonId === 'a')
+  assert.equal(a.at, 5)
+  assert.deepEqual(a.answers, [1, 1, 1])
+  assert.deepEqual(latestQuizResults([]), [])
 })
 
 function makePack() {
