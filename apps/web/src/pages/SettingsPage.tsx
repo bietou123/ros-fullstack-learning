@@ -172,7 +172,7 @@ export default function SettingsPage() {
           </dd>
         </dl>
         <p className="muted">
-          v0.1.0 的 Android 端尚未接入 SSH 实验后端，实验区只显示步骤与检查项（只读模式），不会伪造执行结果。
+          当前 Android 端尚未接入 SSH 实验后端，实验区只显示步骤与检查项（只读模式），不会伪造执行结果。
           需要实际运行实验时请使用 Windows / Linux 桌面端；SSH 配置能力见仓库路线图。
         </p>
       </section>
