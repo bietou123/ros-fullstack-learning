@@ -151,7 +151,11 @@ function find7za() {
       if (!dir.startsWith('7zip-bin@')) continue
       for (const platform of ['win', 'linux', 'mac']) {
         const p = path.join(pnpmDir, dir, 'node_modules/7zip-bin', platform, arch, platform === 'win' ? '7za.exe' : '7za')
-        if (fs.existsSync(p)) return p
+        if (!fs.existsSync(p)) continue
+        if (platform !== 'win') {
+          try { fs.chmodSync(p, 0o755) } catch {}
+        }
+        return p
       }
     }
   }
@@ -168,7 +172,7 @@ function checkExe(file, sevenZip) {
     fs.mkdirSync(out, { recursive: true })
     const r = spawnSync(sevenZip, ['x', file, `-o${out}`, '-y'], { maxBuffer: 256 * 1024 * 1024 })
     if (r.status !== 0) {
-      const detail = `${r.stdout || ''}${r.stderr || ''}`.toString().trim().slice(0, 300)
+      const detail = `${r.error?.message || ''} ${r.stdout || ''}${r.stderr || ''}`.toString().trim().slice(0, 300)
       throw new Error(`7za 解包失败（${r.status}）：${detail}`)
     }
     const asarPath = findFile(out, 'app.asar')
