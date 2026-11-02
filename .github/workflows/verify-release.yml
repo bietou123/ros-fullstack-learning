@@ -9,6 +9,10 @@ on:
         description: Release tag to verify
         required: true
         default: v0.1.0
+      ref:
+        description: Source ref containing the verifier and content pack
+        required: false
+        default: main
 
 permissions:
   contents: read
@@ -23,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || inputs.tag }}
+          ref: ${{ github.event.release.tag_name || inputs.ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
