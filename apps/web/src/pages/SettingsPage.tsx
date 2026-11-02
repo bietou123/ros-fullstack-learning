@@ -14,7 +14,26 @@ import { useApp } from '../store'
 
 declare const __APP_VERSION__: string
 
-function download(name: string, text: string, type = 'application/json') {
+async function download(name: string, text: string, type = 'application/json'): Promise<'shared' | 'downloaded'> {
+  const capacitor = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+  if (capacitor?.isNativePlatform?.()) {
+    const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([
+      import('@capacitor/filesystem'),
+      import('@capacitor/share'),
+    ])
+    const saved = await Filesystem.writeFile({
+      path: name,
+      data: text,
+      directory: Directory.Cache,
+      encoding: Encoding.UTF8,
+    })
+    await Share.share({
+      title: '工业机器人学习数据',
+      text: '在桌面端设置页导入此 JSON 以迁移学习数据。',
+      url: saved.uri,
+    })
+    return 'shared'
+  }
   const blob = new Blob([text], { type })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
@@ -22,6 +41,7 @@ function download(name: string, text: string, type = 'application/json') {
   a.download = name
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+  return 'downloaded'
 }
 
 export default function SettingsPage() {
@@ -110,7 +130,15 @@ export default function SettingsPage() {
         <h3>学习数据</h3>
         <p className="muted">默认只在本机。换设备时导出 JSON，在另一端点导入即可。</p>
         <div className="row gap">
-          <button className="btn" onClick={async () => download(`ros-learning-data-${Date.now()}.json`, await exportAll())}>导出学习数据</button>
+          <button className="btn" onClick={async () => {
+            try {
+              const how = await download(`ros-learning-data-${Date.now()}.json`, await exportAll())
+              if (how === 'shared') setMsg('已生成学习数据文件，请在分享面板中保存或发送到桌面端。')
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err)
+              if (!/cancel/i.test(message)) setMsg(`导出失败：${message}`)
+            }
+          }}>导出学习数据</button>
           <input ref={dataRef} type="file" accept=".json" hidden onChange={async (e) => {
             const f = e.target.files?.[0]
             if (!f) return
