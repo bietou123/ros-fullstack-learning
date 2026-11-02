@@ -165,6 +165,61 @@ async function runSmoke() {
     const expectedHash = process.env.RL_EXPECTED_HASH
     const hashOk = expectedHash ? settingsText.includes(expectedHash) : true
 
+    const privatePack = await win.webContents.executeJavaScript(`(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+      const base = await fetch('content/pack.json').then((r) => r.json())
+      const demo = structuredClone(base)
+      demo.manifest.id = 'rl.smoke.demo'
+      demo.manifest.name = 'Smoke Demo Pack'
+      demo.manifest.visibility = 'private'
+      demo.manifest.license = 'private'
+      demo.manifest.description = 'Synthetic smoke pack; no company data.'
+      const canonical = JSON.stringify({
+        manifest: {
+          id: demo.manifest.id,
+          name: demo.manifest.name,
+          version: demo.manifest.version,
+          visibility: demo.manifest.visibility,
+          minAppVersion: demo.manifest.minAppVersion,
+          license: demo.manifest.license,
+          description: demo.manifest.description,
+        },
+        stages: demo.stages,
+        lessons: demo.lessons,
+        glossary: demo.glossary,
+      })
+      const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical))
+      demo.manifest.hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+      const file = new File([JSON.stringify(demo)], 'smoke-demo.json', { type: 'application/json' })
+      const input = [...document.querySelectorAll('input[type=file]')].find((i) => i.accept.includes('.zip'))
+      const dt = new DataTransfer()
+      dt.items.add(file)
+      input.files = dt.files
+      input.dispatchEvent(new Event('change', { bubbles: true }))
+      const demoRow = () => [...document.querySelectorAll('.pack-row')].find((r) => r.textContent.includes('rl.smoke.demo'))
+      for (let i = 0; i < 60 && !demoRow(); i++) await wait(100)
+      const imported = demoRow()
+      const active = Boolean(imported && imported.classList.contains('active'))
+      const notice = document.querySelector('section.card .notice')?.textContent || ''
+      location.hash = '#/lesson/S0-01'
+      await wait(1200)
+      const lessonOk = document.body.innerText.includes('机器人全栈地图')
+      location.hash = '#/settings'
+      await wait(1000)
+      const pubRow = [...document.querySelectorAll('.pack-row')].find((r) => r.textContent.includes('rl.public.core'))
+      const switchBack = pubRow && [...pubRow.querySelectorAll('button')].find((b) => b.textContent === '切换')
+      switchBack?.click()
+      await wait(1000)
+      const stillDemo = [...document.querySelectorAll('.pack-row')].find((r) => r.textContent.includes('rl.smoke.demo'))
+      const del = stillDemo && [...stillDemo.querySelectorAll('button')].find((b) => b.textContent.trim() === '删除')
+      del?.click()
+      await wait(800)
+      const cleaned = ![...document.querySelectorAll('.pack-row')].some((r) => r.textContent.includes('rl.smoke.demo'))
+      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, switchedBack: Boolean(switchBack), cleaned })
+    })()`)
+    const pk = JSON.parse(privatePack)
+    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.switchedBack && pk.cleaned
+
     await win.webContents.executeJavaScript("location.hash = '#/lesson/S0-01'")
     await new Promise((r) => setTimeout(r, 1200))
     await win.webContents.executeJavaScript(
@@ -232,10 +287,12 @@ async function runSmoke() {
       offline: offlineMode,
       quizOk: quizQuestions >= 3 && quizExplains === quizQuestions && quizText.includes('得分'),
       notesOk: noteSaved === 1 && noteAfterReload === 1 && noteAfterDelete === 0,
+      privatePackOk,
+      privatePack: pk,
     }
     console.log('SMOKE_RESULT ' + JSON.stringify(result))
     app.exit(
-      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.quizOk && result.notesOk
+      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.hashOk && result.quizOk && result.notesOk && result.privatePackOk
         ? 0
         : 1,
     )

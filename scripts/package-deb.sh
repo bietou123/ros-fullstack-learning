@@ -20,8 +20,9 @@ cp -r apps/web/dist apps/desktop/web
 pnpm --filter @rl/desktop exec electron-builder --linux deb --x64 --arm64
 
 mkdir -p release
+VERSION="$(node -p "require('./package.json').version")"
 found=0
-for f in dist/*.deb; do
+for f in "dist/ros-fullstack-learning_${VERSION}_amd64.deb" "dist/ros-fullstack-learning_${VERSION}_arm64.deb"; do
   [ -e "$f" ] || continue
   cp -f "$f" release/
   size=$(du -m "$f" | cut -f1)
@@ -30,7 +31,7 @@ for f in dist/*.deb; do
   found=$((found + 1))
 done
 
-if [ "$found" -eq 0 ]; then
-  echo "未找到 deb 产物，检查 electron-builder 输出" >&2
+if [ "$found" -ne 2 ]; then
+  echo "deb 产物不完整：期望 amd64/arm64 各一个，实际找到 ${found} 个" >&2
   exit 1
 fi

@@ -42,7 +42,7 @@ pnpm dev            # 浏览器开发模式
 | `pnpm package:exe` | 构建 Windows NSIS 安装包 |
 | `pnpm package:deb` | 构建 Linux deb（需 Linux/WSL，含 x64/arm64） |
 | `pnpm package:apk` | 构建签名 Android APK（需 JDK 17 + Android SDK） |
-| `pnpm smoke:desktop` | 构建并运行桌面端隐藏窗口冒烟；前缀 `RL_SMOKE_OFFLINE=1` 可强制断网并校验测验 |
+| `pnpm smoke:desktop` | 构建并运行桌面端隐藏窗口冒烟；前缀 `RL_SMOKE_OFFLINE=1` 可强制断网并校验测验。冒烟内含合成私有包导入→激活→只读浏览→切回→删除的回归 |
 | `make verify` / `make package-exe` | 同上，命令行别名 |
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。

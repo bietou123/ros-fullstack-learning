@@ -37,8 +37,10 @@ run('pnpm --filter @rl/desktop exec electron-builder --win nsis --x64', {
 })
 
 const distDir = path.join(root, 'dist')
-const artifacts = fs.readdirSync(distDir).filter((f) => f.endsWith('.exe') && !f.endsWith('.blockmap'))
-if (artifacts.length === 0) throw new Error('未找到 exe 产物，检查 electron-builder 输出')
+const version = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8')).version
+const expected = `IndustryRoboticsLearning-${version}-x64.exe`
+const artifacts = fs.readdirSync(distDir).filter((f) => f === expected)
+if (artifacts.length === 0) throw new Error(`未找到 exe 产物 ${expected}，检查 electron-builder 输出`)
 
 fs.mkdirSync(releaseDir, { recursive: true })
 for (const name of artifacts) {
