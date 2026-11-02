@@ -145,18 +145,17 @@ function checkDeb(file) {
 function find7za() {
   if (process.env.RL_7ZA) return process.env.RL_7ZA
   const pnpmDir = path.join(root, 'node_modules/.pnpm')
-  const arch = { x64: 'x64', arm64: 'arm64', ia32: 'ia32' }[process.arch] || 'x64'
+  const platform = process.platform === 'win32' ? 'win' : process.platform === 'darwin' ? 'mac' : 'linux'
+  const arch = { x64: 'x64', arm64: 'arm64', ia32: 'ia32', arm: 'arm' }[process.arch] || 'x64'
   if (fs.existsSync(pnpmDir)) {
     for (const dir of fs.readdirSync(pnpmDir)) {
       if (!dir.startsWith('7zip-bin@')) continue
-      for (const platform of ['win', 'linux', 'mac']) {
-        const p = path.join(pnpmDir, dir, 'node_modules/7zip-bin', platform, arch, platform === 'win' ? '7za.exe' : '7za')
-        if (!fs.existsSync(p)) continue
-        if (platform !== 'win') {
-          try { fs.chmodSync(p, 0o755) } catch {}
-        }
-        return p
+      const p = path.join(pnpmDir, dir, 'node_modules/7zip-bin', platform, arch, platform === 'win' ? '7za.exe' : '7za')
+      if (!fs.existsSync(p)) continue
+      if (platform !== 'win') {
+        try { fs.chmodSync(p, 0o755) } catch {}
       }
+      return p
     }
   }
   for (const name of ['7za', '7z']) {
