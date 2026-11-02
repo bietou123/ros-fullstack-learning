@@ -2,22 +2,28 @@ import { openDB, type IDBPDatabase } from 'idb'
 import type { Bookmark, Note, Progress, QuizResult } from './types'
 
 const DB_NAME = 'rl-learning'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbp: Promise<IDBPDatabase> | null = null
 
 function db() {
   if (!dbp) {
     dbp = openDB(DB_NAME, DB_VERSION, {
-      upgrade(d) {
-        d.createObjectStore('progress', { keyPath: 'lessonId' })
-        const notes = d.createObjectStore('notes', { keyPath: 'id' })
-        notes.createIndex('lessonId', 'lessonId')
-        const quiz = d.createObjectStore('quiz', { keyPath: 'id' })
-        quiz.createIndex('lessonId', 'lessonId')
-        d.createObjectStore('bookmarks', { keyPath: 'lessonId' })
-        d.createObjectStore('settings', { keyPath: 'key' })
-        d.createObjectStore('packs', { keyPath: 'id' })
+      upgrade(d, oldVersion) {
+        if (oldVersion < 1) {
+          d.createObjectStore('progress', { keyPath: 'lessonId' })
+          const notes = d.createObjectStore('notes', { keyPath: 'id' })
+          notes.createIndex('lessonId', 'lessonId')
+          const quiz = d.createObjectStore('quiz', { keyPath: 'id' })
+          quiz.createIndex('lessonId', 'lessonId')
+          d.createObjectStore('bookmarks', { keyPath: 'lessonId' })
+          d.createObjectStore('settings', { keyPath: 'key' })
+          d.createObjectStore('packs', { keyPath: 'id' })
+        }
+        if (oldVersion < 2) {
+          const media = d.createObjectStore('media', { keyPath: 'id' })
+          media.createIndex('packId', 'packId')
+        }
       },
     })
   }
@@ -126,7 +132,40 @@ export async function listPrivatePacks(): Promise<unknown[]> {
 }
 
 export async function deletePrivatePack(id: string): Promise<void> {
-  await (await db()).delete('packs', id)
+  const d = await db()
+  await d.delete('packs', id)
+  await deletePackMedia(id)
+}
+
+function mediaPath(path: string): string {
+  return path.replace(/^\.?\//, '').replace(/\\/g, '/')
+}
+
+export interface PackMediaRecord {
+  id: string
+  packId: string
+  path: string
+  blob: Blob
+  size: number
+}
+
+export async function savePackMedia(packId: string, path: string, blob: Blob): Promise<void> {
+  const clean = mediaPath(path)
+  await (await db()).put('media', { id: `${packId}:${clean}`, packId, path: clean, blob, size: blob.size })
+}
+
+export async function getPackMedia(packId: string, path: string): Promise<Blob | undefined> {
+  const rec = await (await db()).get('media', `${packId}:${mediaPath(path)}`)
+  return rec?.blob
+}
+
+export async function listPackMedia(packId: string): Promise<PackMediaRecord[]> {
+  return (await db()).getAllFromIndex('media', 'packId', packId)
+}
+
+export async function deletePackMedia(packId: string): Promise<void> {
+  const d = await db()
+  for (const rec of await d.getAllFromIndex('media', 'packId', packId)) await d.delete('media', rec.id)
 }
 
 export async function exportAll(): Promise<string> {

@@ -187,6 +187,8 @@ code { font-family: var(--mono); }
 .md th, .md td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
 .md th { background: var(--bg3); }
 .table-wrap { overflow-x: auto; }
+.md-image { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); margin: 12px 0; }
+.md-video { display: block; width: 100%; max-width: 960px; margin: 14px 0; border-radius: 8px; border: 1px solid var(--line); background: #000; }
 .inline-code { background: #1c2532; border: 1px solid #2b3646; border-radius: 4px; padding: 1px 5px; font-size: .9em; color: #ffa657; }
 
 .codeblock { margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: #0b1017; }

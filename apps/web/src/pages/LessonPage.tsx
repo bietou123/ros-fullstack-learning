@@ -5,11 +5,12 @@ import Markdown from '../components/Markdown'
 import Quiz from '../components/Quiz'
 import Notes from '../components/Notes'
 import Experiment from '../components/Experiment'
+import { useResolvedMarkdown } from '../media'
 
 type Tab = 'text' | 'quiz' | 'notes' | 'exp'
 
 export default function LessonPage({ lessonId }: { lessonId: string }) {
-  const { pack, progress, refresh } = useApp()
+  const { pack, progress, refresh, privatePacks, activePackId } = useApp()
   const [tab, setTab] = useState<Tab>('text')
   const [bookmarked, setBookmarked] = useState(false)
   const [pct, setPct] = useState(0)
@@ -21,6 +22,8 @@ export default function LessonPage({ lessonId }: { lessonId: string }) {
   const idx = pack?.lessons.findIndex((l) => l.id === lessonId) ?? -1
   const prev = idx > 0 ? pack!.lessons[idx - 1] : null
   const next = idx >= 0 && idx < (pack?.lessons.length ?? 0) - 1 ? pack!.lessons[idx + 1] : null
+  const isPublicPack = !privatePacks.some((p) => p?.manifest?.id === activePackId)
+  const markdown = useResolvedMarkdown(lesson?.markdown ?? '', activePackId, isPublicPack)
 
   useEffect(() => {
     setTab('text')
@@ -97,7 +100,7 @@ export default function LessonPage({ lessonId }: { lessonId: string }) {
         <button className={tab === 'notes' ? 'active' : ''} onClick={() => setTab('notes')}>笔记</button>
       </div>
 
-      {tab === 'text' && <Markdown>{lesson.markdown}</Markdown>}
+      {tab === 'text' && <Markdown>{markdown}</Markdown>}
       {tab === 'quiz' && <Quiz lessonId={lessonId} quiz={lesson.quiz} />}
       {tab === 'exp' && (lesson.experiment ? <Experiment spec={lesson.experiment} /> : <div className="card"><p className="muted">本节没有可运行实验，完成复盘题即可。</p></div>)}
       {tab === 'notes' && <Notes lessonId={lessonId} />}

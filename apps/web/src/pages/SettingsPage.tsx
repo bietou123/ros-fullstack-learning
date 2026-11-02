@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import JSZip from 'jszip'
 import {
   deletePrivatePack,
+  deletePackMedia,
   exportAll,
   importAll,
   listPrivatePacks,
+  packMediaEntry,
   resetAll,
   savePrivatePack,
+  savePackMedia,
   verifyPack,
   type ContentPack,
 } from '@rl/core'
@@ -66,11 +69,18 @@ export default function SettingsPage() {
   async function importPack(file: File) {
     try {
       let json = ''
+      const media: { path: string; blob: Blob }[] = []
       if (file.name.endsWith('.zip')) {
         const zip = await JSZip.loadAsync(file)
         const entry = Object.keys(zip.files).find((n) => n.endsWith('pack.json'))
         if (!entry) throw new Error('zip 内没有 pack.json')
         json = await zip.files[entry].async('string')
+        for (const [name, zf] of Object.entries(zip.files)) {
+          if (zf.dir) continue
+          const rel = packMediaEntry(name, entry)
+          if (!rel) continue
+          media.push({ path: rel, blob: await zf.async('blob') })
+        }
       } else {
         json = await file.text()
       }
@@ -78,9 +88,13 @@ export default function SettingsPage() {
       if (!p.manifest || !Array.isArray(p.lessons)) throw new Error('不是有效的内容包')
       const v = verifyPack(p)
       await savePrivatePack(p)
+      if (media.length) {
+        await deletePackMedia(p.manifest.id)
+        for (const m of media) await savePackMedia(p.manifest.id, m.path, m.blob)
+      }
       await load()
       await switchPack(p.manifest.id)
-      setMsg(`已导入 ${p.manifest.id} · ${p.manifest.version}｜哈希校验${v.ok ? '通过' : '未通过（旧包或已修改）'}`)
+      setMsg(`已导入 ${p.manifest.id} · ${p.manifest.version}｜哈希校验${v.ok ? '通过' : '未通过（旧包或已修改）'}${media.length ? `｜媒体 ${media.length} 个` : ''}`)
       await refresh()
     } catch (e) {
       setMsg(`导入失败：${e instanceof Error ? e.message : String(e)}`)

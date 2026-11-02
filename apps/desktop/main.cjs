@@ -122,6 +122,9 @@ async function runSmoke() {
   fs.mkdirSync(outDir, { recursive: true })
   const offlineMode = Boolean(process.env.RL_SMOKE_OFFLINE)
   const win = createWindow(false, offlineMode)
+  win.webContents.on('console-message', (_e, _level, message) => {
+    if (/error|uncaught|failed/i.test(String(message))) console.log('RENDERER ' + message)
+  })
   win.webContents.once('did-finish-load', async () => {
     await new Promise((r) => setTimeout(r, 3000))
     const homeText = await win.webContents.executeJavaScript('document.body.innerText')
@@ -170,9 +173,14 @@ async function runSmoke() {
     const hashOk = expectedHash ? settingsText.includes(expectedHash) : true
 
     const privatePack = await win.webContents.executeJavaScript(`(async () => {
+      try {
       const wait = (ms) => new Promise((r) => setTimeout(r, ms))
       const base = await fetch('content/pack.json').then((r) => r.json())
       const demo = structuredClone(base)
+      const demoLesson = demo.lessons.find((l) => l.id === 'S0-01')
+      if (demoLesson) {
+        demoLesson.markdown += '\\n\\n![media-demo](media/demo.mp4)\\n\\n![image-demo](media/demo.png)\\n'
+      }
       demo.manifest.id = 'rl.smoke.demo'
       demo.manifest.name = 'Smoke Demo Pack'
       demo.manifest.visibility = 'private'
@@ -210,9 +218,34 @@ async function runSmoke() {
       imported = imported || demoRow()
       const active = Boolean(imported && imported.classList.contains('active'))
       const notice = document.querySelector('section.card .notice')?.textContent || ''
+      const putMedia = async (path, bytes, type) => {
+        const req = indexedDB.open('rl-learning')
+        const db = await new Promise((res, rej) => {
+          req.onsuccess = () => res(req.result)
+          req.onerror = () => rej(req.error)
+        })
+        await new Promise((res, rej) => {
+          const tx = db.transaction('media', 'readwrite')
+          tx.objectStore('media').put({
+            id: 'rl.smoke.demo:' + path,
+            packId: 'rl.smoke.demo',
+            path,
+            blob: new Blob([bytes], { type }),
+            size: bytes.length,
+          })
+          tx.oncomplete = res
+          tx.onerror = () => rej(tx.error)
+        })
+        db.close()
+      }
+      await putMedia('media/demo.mp4', new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112]), 'video/mp4')
+      await putMedia('media/demo.png', new Uint8Array([137, 80, 78, 71]), 'image/png')
       location.hash = '#/lesson/S0-01'
-      await wait(1200)
+      await wait(1500)
       const lessonOk = document.body.innerText.includes('机器人全栈地图')
+      const videoOk = [...document.querySelectorAll('.md video')].some((v) => v.src.startsWith('blob:'))
+      const imgOk = [...document.querySelectorAll('.md img')].some((i) => i.src.startsWith('blob:'))
+      const mediaOk = videoOk && imgOk
       location.hash = '#/settings'
       await wait(1000)
       const pubRow = [...document.querySelectorAll('.pack-row')].find((r) => r.textContent.includes('rl.public.core'))
@@ -224,10 +257,13 @@ async function runSmoke() {
       del?.click()
       await wait(800)
       const cleaned = ![...document.querySelectorAll('.pack-row')].some((r) => r.textContent.includes('rl.smoke.demo'))
-      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, switchedBack: Boolean(switchBack), cleaned })
-    })()`)
+      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, mediaOk, switchedBack: Boolean(switchBack), cleaned })
+      } catch (e) {
+        return JSON.stringify({ error: String(e), stack: e && e.stack })
+      }
+    })()`).catch((e) => JSON.stringify({ evalError: String(e) }))
     const pk = JSON.parse(privatePack)
-    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.switchedBack && pk.cleaned
+    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.mediaOk && pk.switchedBack && pk.cleaned
 
     await win.webContents.executeJavaScript("location.hash = '#/lesson/S0-01'")
     await new Promise((r) => setTimeout(r, 1200))

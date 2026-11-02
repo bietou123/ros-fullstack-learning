@@ -2,6 +2,7 @@ export * from './types'
 export * from './pack'
 export * from './search'
 export * from './quiz'
+export * from './media'
 export * from './platform'
 export {
   getProgress,
@@ -21,6 +22,10 @@ export {
   savePrivatePack,
   listPrivatePacks,
   deletePrivatePack,
+  savePackMedia,
+  getPackMedia,
+  listPackMedia,
+  deletePackMedia,
   exportAll,
   importAll,
   resetAll,

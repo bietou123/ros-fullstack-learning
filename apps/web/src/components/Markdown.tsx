@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
 import type { Components } from 'react-markdown'
 import type { LanguageInput } from 'shiki/core'
+import { mediaKind } from '@rl/core'
 
 const LANG_MAP: Record<string, string> = {
   sh: 'bash', shell: 'bash', console: 'bash', zsh: 'bash',
@@ -85,6 +86,17 @@ const components: Components = {
       </div>
     )
   },
+  img(props) {
+    const src = String(props.src ?? '')
+    if (mediaKind(src) === 'video') {
+      return (
+        <video className="md-video" controls preload="metadata" src={src} title={props.title ?? props.alt ?? ''}>
+          {props.alt}
+        </video>
+      )
+    }
+    return <img className="md-image" src={src} alt={props.alt ?? ''} title={props.title} loading="lazy" />
+  },
   a(props) {
     const href = props.href ?? ''
     if (href.startsWith('#')) return <a {...props} />
@@ -92,10 +104,12 @@ const components: Components = {
   },
 }
 
+const transformUrl = (url: string) => (url.startsWith('blob:') ? url : defaultUrlTransform(url))
+
 export default function Markdown({ children }: { children: string }) {
   return (
     <div className="md">
-      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={components} urlTransform={transformUrl}>
         {children}
       </ReactMarkdown>
     </div>

@@ -8,6 +8,7 @@ import { computePackHash, verifyPack, packStats } from '../src/pack.ts'
 import { privatePackRecord } from '../src/store.ts'
 import { buildIndex, search, searchLessons } from '../src/search.ts'
 import { readOnlyAdapter, setPlatformAdapter, getPlatform, detectBackend, runExperiment } from '../src/platform.ts'
+import { mediaKind, packMediaEntry } from '../src/media.ts'
 
 const DAY = 86400000
 
@@ -255,6 +256,22 @@ test('privatePackRecord：私有包存储键取自 manifest.id', () => {
 
   assert.throws(() => privatePackRecord({ manifest: {} }), /manifest\.id/)
   assert.throws(() => privatePackRecord(null), /manifest\.id/)
+})
+
+test('mediaKind：视频扩展名渲染为 video，图片与查询参数正确识别', () => {
+  assert.equal(mediaKind('content/media/demo.mp4'), 'video')
+  assert.equal(mediaKind('content/media/demo.WEBM?x=1'), 'video')
+  assert.equal(mediaKind('content/media/demo.gif'), 'image')
+  assert.equal(mediaKind('content/media/demo.png#frag'), 'image')
+  assert.equal(mediaKind('https://example.com/a.pdf'), 'other')
+})
+
+test('packMediaEntry：只接受 pack.json 同级 media/ 下的媒体文件', () => {
+  assert.equal(packMediaEntry('media/demo.mp4', 'pack.json'), 'media/demo.mp4')
+  assert.equal(packMediaEntry('pack/media/demo.png', 'pack/pack.json'), 'media/demo.png')
+  assert.equal(packMediaEntry('other/media/demo.mp4', 'pack/pack.json'), null)
+  assert.equal(packMediaEntry('pack/media2/demo.mp4', 'pack/pack.json'), null)
+  assert.equal(packMediaEntry('pack/lesson.md', 'pack/pack.json'), null)
 })
 
 test('构建脚本产出的内容包必须通过核心库校验（防哈希算法漂移）', (t) => {
