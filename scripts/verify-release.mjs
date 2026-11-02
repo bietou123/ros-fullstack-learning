@@ -115,24 +115,62 @@ async function checkApk(file) {
   return checkPack(JSON.parse(await zip.files[packEntry].async('string')), 'APK')
 }
 
+function checkAsar(asarPath, label) {
+  const entries = asar.listPackage(asarPath)
+  const pick = (suffix) => {
+    const hit = entries.find((n) => n.replace(/\\/g, '/').endsWith(suffix))
+    return hit ? hit.replace(/^[\\/]+/, '') : null
+  }
+  const infoEntry = pick('web/content/build-info.json')
+  const packEntry = pick('web/content/pack.json')
+  if (!infoEntry || !packEntry) throw new Error(`${label} 的 asar 内缺少 web/content/build-info.json 或 pack.json`)
+  const embeddedInfo = JSON.parse(asar.extractFile(asarPath, infoEntry).toString('utf8'))
+  if (embeddedInfo.hash !== expectedHash) throw new Error(`${label} build-info 哈希=${embeddedInfo.hash}`)
+  const pack = JSON.parse(asar.extractFile(asarPath, packEntry).toString('utf8'))
+  return checkPack(pack, label)
+}
+
 function checkDeb(file) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rl-deb-'))
   try {
     const extracted = extractDeb(file, tmp)
     const asarPath = findFile(extracted, 'app.asar')
     if (!asarPath) throw new Error('deb 内缺少 app.asar')
-    const entries = asar.listPackage(asarPath)
-    const pick = (suffix) => {
-      const hit = entries.find((n) => n.replace(/\\/g, '/').endsWith(suffix))
-      return hit ? hit.replace(/^[\\/]+/, '') : null
+    return checkAsar(asarPath, 'deb')
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true })
+  }
+}
+
+function find7za() {
+  if (process.env.RL_7ZA) return process.env.RL_7ZA
+  const pnpmDir = path.join(root, 'node_modules/.pnpm')
+  const arch = { x64: 'x64', arm64: 'arm64', ia32: 'ia32' }[process.arch] || 'x64'
+  if (fs.existsSync(pnpmDir)) {
+    for (const dir of fs.readdirSync(pnpmDir)) {
+      if (!dir.startsWith('7zip-bin@')) continue
+      for (const platform of ['win', 'linux', 'mac']) {
+        const p = path.join(pnpmDir, dir, 'node_modules/7zip-bin', platform, arch, platform === 'win' ? '7za.exe' : '7za')
+        if (fs.existsSync(p)) return p
+      }
     }
-    const infoEntry = pick('web/content/build-info.json')
-    const packEntry = pick('web/content/pack.json')
-    if (!infoEntry || !packEntry) throw new Error('asar 内缺少 web/content/build-info.json 或 pack.json')
-    const embeddedInfo = JSON.parse(asar.extractFile(asarPath, infoEntry).toString('utf8'))
-    if (embeddedInfo.hash !== expectedHash) throw new Error(`build-info 哈希=${embeddedInfo.hash}`)
-    const pack = JSON.parse(asar.extractFile(asarPath, packEntry).toString('utf8'))
-    return checkPack(pack, 'deb')
+  }
+  for (const name of ['7za', '7z']) {
+    if (spawnSync(name, ['i'], { stdio: 'ignore' }).status === 0) return name
+  }
+  return null
+}
+
+function checkExe(file, sevenZip) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'rl-exe-'))
+  try {
+    const out = path.join(tmp, 'exe')
+    fs.mkdirSync(out, { recursive: true })
+    const r = spawnSync(sevenZip, ['x', file, 'resources\\app.asar', `-o${out}`, '-y'], { maxBuffer: 64 * 1024 * 1024 })
+    if (r.status !== 0) throw new Error(`7za 解包失败：${(r.stderr || '').toString().slice(0, 300)}`)
+    const asarPath = findFile(out, 'app.asar')
+    if (!asarPath) throw new Error('exe 内缺少 resources/app.asar')
+    return checkAsar(asarPath, 'exe')
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true })
   }
@@ -161,7 +199,23 @@ for (const [kind, list] of [['apk', apks], ['deb', debs]]) {
 }
 
 const exes = files.filter((f) => f.toLowerCase().endsWith('.exe'))
-for (const name of exes) console.log(`SKIP  ${name}  Windows 安装包用 pnpm smoke:desktop / 安装冒烟验证`)
+if (exes.length) {
+  const sevenZip = find7za()
+  for (const name of exes) {
+    const file = path.join(releaseDir, name)
+    if (!sevenZip) {
+      console.log(`SKIP  ${name}  未找到 7za/7z，无法解包（设置 RL_7ZA 后重试）`)
+      continue
+    }
+    try {
+      const detail = checkExe(file, sevenZip)
+      console.log(`PASS  ${name}  ${detail}  sha256=${sha256File(file).slice(0, 16)}…`)
+    } catch (e) {
+      failed++
+      console.log(`FAIL  ${name}  ${e.message}`)
+    }
+  }
+}
 
 console.log(failed ? `\nVERIFY_RELEASE_FAIL ${failed}` : '\nVERIFY_RELEASE_OK')
 process.exit(failed ? 1 : 0)
