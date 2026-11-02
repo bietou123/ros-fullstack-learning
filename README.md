@@ -47,6 +47,8 @@ pnpm dev            # 浏览器开发模式
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。
 
+GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.0 -f ref=main`。
+
 ## 构建三端
 
 ### Windows exe
