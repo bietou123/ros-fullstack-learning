@@ -202,7 +202,54 @@ async function runSmoke() {
       })
       const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical))
       demo.manifest.hash = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
-      const file = new File([JSON.stringify(demo)], 'smoke-demo.json', { type: 'application/json' })
+      const crcTable = (() => {
+        const t = new Uint32Array(256)
+        for (let i = 0; i < 256; i++) {
+          let c = i
+          for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1
+          t[i] = c >>> 0
+        }
+        return t
+      })()
+      const crc32 = (bytes) => {
+        let c = 0xFFFFFFFF
+        for (const b of bytes) c = crcTable[(c ^ b) & 0xff] ^ (c >>> 8)
+        return (c ^ 0xFFFFFFFF) >>> 0
+      }
+      const u16 = (n) => [n & 255, (n >>> 8) & 255]
+      const u32 = (n) => [n & 255, (n >>> 8) & 255, (n >>> 16) & 255, (n >>> 24) & 255]
+      const enc = new TextEncoder()
+      const zipFiles = [
+        { name: 'pack.json', data: enc.encode(JSON.stringify(demo)) },
+        { name: 'media/demo.mp4', data: new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112]) },
+        { name: 'media/demo.png', data: new Uint8Array([137, 80, 78, 71]) },
+      ]
+      const localParts = []
+      const central = []
+      let offset = 0
+      for (const f of zipFiles) {
+        const name = enc.encode(f.name)
+        const crc = crc32(f.data)
+        const head = new Uint8Array([...u32(0x04034b50), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(crc), ...u32(f.data.length), ...u32(f.data.length), ...u16(name.length), ...u16(0), ...name])
+        localParts.push(head, f.data)
+        central.push({ name, crc, size: f.data.length, offset })
+        offset += head.length + f.data.length
+      }
+      const cdParts = []
+      let cdSize = 0
+      for (const c of central) {
+        const h = new Uint8Array([...u32(0x02014b50), ...u16(20), ...u16(20), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(c.crc), ...u32(c.size), ...u32(c.size), ...u16(c.name.length), ...u16(0), ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(c.offset), ...c.name])
+        cdParts.push(h)
+        cdSize += h.length
+      }
+      const eocd = new Uint8Array([...u32(0x06054b50), ...u16(0), ...u16(0), ...u16(zipFiles.length), ...u16(zipFiles.length), ...u32(cdSize), ...u32(offset), ...u16(0)])
+      const zip = new Uint8Array(offset + cdSize + eocd.length)
+      let cursor = 0
+      for (const part of [...localParts, ...cdParts, eocd]) {
+        zip.set(part, cursor)
+        cursor += part.length
+      }
+      const file = new File([zip], 'smoke-demo.zip', { type: 'application/zip' })
       const input = [...document.querySelectorAll('input[type=file]')].find((i) => i.accept.includes('.zip'))
       const dt = new DataTransfer()
       dt.items.add(file)
@@ -218,28 +265,7 @@ async function runSmoke() {
       imported = imported || demoRow()
       const active = Boolean(imported && imported.classList.contains('active'))
       const notice = document.querySelector('section.card .notice')?.textContent || ''
-      const putMedia = async (path, bytes, type) => {
-        const req = indexedDB.open('rl-learning')
-        const db = await new Promise((res, rej) => {
-          req.onsuccess = () => res(req.result)
-          req.onerror = () => rej(req.error)
-        })
-        await new Promise((res, rej) => {
-          const tx = db.transaction('media', 'readwrite')
-          tx.objectStore('media').put({
-            id: 'rl.smoke.demo:' + path,
-            packId: 'rl.smoke.demo',
-            path,
-            blob: new Blob([bytes], { type }),
-            size: bytes.length,
-          })
-          tx.oncomplete = res
-          tx.onerror = () => rej(tx.error)
-        })
-        db.close()
-      }
-      await putMedia('media/demo.mp4', new Uint8Array([0, 0, 0, 24, 102, 116, 121, 112]), 'video/mp4')
-      await putMedia('media/demo.png', new Uint8Array([137, 80, 78, 71]), 'image/png')
+      const mediaImported = notice.includes('媒体 2 个')
       location.hash = '#/lesson/S0-01'
       await wait(1500)
       const lessonOk = document.body.innerText.includes('机器人全栈地图')
@@ -257,13 +283,26 @@ async function runSmoke() {
       del?.click()
       await wait(800)
       const cleaned = ![...document.querySelectorAll('.pack-row')].some((r) => r.textContent.includes('rl.smoke.demo'))
-      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, mediaOk, switchedBack: Boolean(switchBack), cleaned })
+      const mediaLeft = await (async () => {
+        const req = indexedDB.open('rl-learning')
+        const db = await new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = () => rej(req.error) })
+        const left = await new Promise((res, rej) => {
+          const tx = db.transaction('media', 'readonly')
+          const r = tx.objectStore('media').index('packId').count('rl.smoke.demo')
+          r.onsuccess = () => res(r.result)
+          r.onerror = () => rej(r.error)
+        })
+        db.close()
+        return left
+      })()
+      const mediaCleaned = mediaLeft === 0
+      return JSON.stringify({ imported: Boolean(imported), active, notice: notice.slice(0, 80), lessonOk, mediaImported, mediaOk, mediaCleaned, switchedBack: Boolean(switchBack), cleaned })
       } catch (e) {
         return JSON.stringify({ error: String(e), stack: e && e.stack })
       }
     })()`).catch((e) => JSON.stringify({ evalError: String(e) }))
     const pk = JSON.parse(privatePack)
-    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.mediaOk && pk.switchedBack && pk.cleaned
+    const privatePackOk = pk.imported && pk.active && pk.lessonOk && pk.mediaImported && pk.mediaOk && pk.mediaCleaned && pk.switchedBack && pk.cleaned
 
     await win.webContents.executeJavaScript("location.hash = '#/lesson/S0-01'")
     await new Promise((r) => setTimeout(r, 1200))
