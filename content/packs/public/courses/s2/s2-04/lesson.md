@@ -1,6 +1,6 @@
 # S2-04 · service 与 action
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器。
+> 验证状态：✅ 2026-11-03 在 `ros:humble-ros-base` 容器内实测 `rcl_interfaces/srv/GetParameters` 接口读取、`action`/`service` 子命令帮助均通过。该镜像**不含 `example_interfaces`**；命令示例中的 AddTwoInts / Fibonacci 需额外安装 `ros-humble-example-interfaces`（apt 可用）。
 
 ## 1. 现场类比
 
@@ -31,6 +31,8 @@
 **action 底层就是两个 service + 两个 topic**，不是新传输机制。
 
 ### 2.3 代码骨架（rclpy action server）
+
+（示例依赖 `example_interfaces`，镜像内需先 `apt-get install -y ros-humble-example-interfaces`。）
 
 ```python
 from rclpy.action import ActionServer
@@ -64,6 +66,9 @@ source /opt/ros/humble/setup.bash
 
 ros2 service list -t
 ros2 action list -t
+ros2 interface show rcl_interfaces/srv/GetParameters
+
+# 以下两条需要额外安装：apt-get install -y ros-humble-example-interfaces
 ros2 interface show example_interfaces/srv/AddTwoInts
 ros2 interface show example_interfaces/action/Fibonacci
 
@@ -88,8 +93,8 @@ ros2 action send_goal /fibonacci example_interfaces/action/Fibonacci "{order: 5}
 镜像 `ros:humble-ros-base`：
 
 ```bash
-source /opt/ros/humble/setup.bash && ros2 interface show example_interfaces/srv/AddTwoInts | head -n 5
-source /opt/ros/humble/setup.bash && ros2 action list --help 2>&1 | grep -q action
+source /opt/ros/humble/setup.bash && ros2 interface show rcl_interfaces/srv/GetParameters > /tmp/i.txt && grep -q ParameterValue /tmp/i.txt
+source /opt/ros/humble/setup.bash && ros2 action --help 2>/dev/null | grep -q goal
 ```
 
 ## 6. 常见故障

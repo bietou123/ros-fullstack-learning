@@ -1,6 +1,6 @@
 # S1-07 · TF 入门与 RViz
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**；RViz 需要图形界面，容器内仅验证工具链。
+> 验证状态：✅ 2026-11-03 在 `ros:noetic-perception` 容器（WSL Ubuntu 24.04，headless）实测 `static_transform_publisher` 发布、`tf_echo` 查询与包检查均通过；RViz 图形界面未验证。
 
 ## 1. 现场类比
 
@@ -75,14 +75,14 @@ rosrun tf view_frames
 
 ## 5. 自动检查
 
-镜像 `ros:noetic-ros-base`：
+镜像 `ros:noetic-perception`（`ros-base` 不含 tf / tf2_ros）：
 
 ```bash
 source /opt/ros/noetic/setup.bash && rospack find tf
 source /opt/ros/noetic/setup.bash && rospack find tf2_ros
 ```
 
-注意 `ros-base` 镜像不含 RViz；需要图形化请在本机安装 `ros-noetic-rviz` 或使用 `ros-noetic-desktop` 镜像。
+注意该镜像不含 RViz；需要图形化请在本机安装 `ros-noetic-rviz` 或使用自行构建的 desktop 镜像。
 
 ## 6. 常见故障
 

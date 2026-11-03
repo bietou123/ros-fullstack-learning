@@ -9,13 +9,13 @@ sources: ["E_ROS与Linux命令手册", "C_现场踩坑"]
 experiment:
   id: "s3-06-chain"
   ros: "ros2"
-  image: "ros:humble-ros-base"
+  image: "ros:humble-xacro"
   network: "host"
   commands:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -E \"robot_state_publisher|joint_state_publisher\" | head -n 5'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && command -v check_urdf && command -v xacro'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q robot_state_publisher'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list 2>/dev/null | grep -q robot_state_publisher'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && command -v xacro'"
   timeoutSec: 300
   headless: true

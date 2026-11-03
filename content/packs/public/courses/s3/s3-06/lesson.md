@@ -1,6 +1,6 @@
 # S3-06 · 挖机关节链 URDF 实战
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。文中所有尺寸为教学示例值，非任何实车参数。
+> 验证状态：✅ 2026-11-03 在本地构建的 `ros:humble-xacro` 镜像（`ros:humble-ros-base` + `ros-humble-xacro`）内实测 `check_urdf`、`xacro`、`robot_state_publisher` 均可用；RViz/joint_state_publisher_gui 图形界面未验证。文中所有尺寸为教学示例值，非任何实车参数。
 
 ## 1. 现场类比
 
@@ -134,7 +134,11 @@ rviz2
 
 ## 5. 自动检查
 
-镜像 `ros:humble-ros-base`：
+镜像 `ros:humble-xacro`（基于 `ros:humble-ros-base` + `ros-humble-xacro`；`ros-base` 本身不含 xacro）。构建：
+
+```bash
+docker build -t ros:humble-xacro scripts/experiment-images/ros-humble-xacro
+```
 
 ```bash
 source /opt/ros/humble/setup.bash && command -v check_urdf

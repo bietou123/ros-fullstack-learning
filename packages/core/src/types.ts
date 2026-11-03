@@ -55,6 +55,7 @@ export interface ExperimentSpec {
   id: string
   ros: 'ros1' | 'ros2' | 'none'
   image?: string
+  network?: string
   commands: string[]
   checks: string[]
   expected?: string

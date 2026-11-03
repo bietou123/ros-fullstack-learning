@@ -48,7 +48,7 @@ def decode_status(raw_bytes: bytes) -> dict:
         "rpm":       (v >> 5) * 0.5,
     }
 
-print(decode_status(bytes([0x2A, 0x10])))
+print(decode_status(bytes([0x8A, 0x20])))
 ```
 
 预期输出：`{'mode': 2, 'enabled': False, 'fault_lvl': 1, 'rpm': 130.0}`。
@@ -84,7 +84,7 @@ candump can0 | grep 181
 
 # 用 Python 快速解码（把字节串贴进去）
 python3 - <<'PY'
-raw = bytes([0x2A, 0x10])
+raw = bytes([0x8A, 0x20])
 v = int.from_bytes(raw, "little")
 print("mode", v & 3, "enabled", bool((v >> 2) & 1),
       "fault", (v >> 3) & 3, "rpm", (v >> 5) * 0.5)
@@ -106,7 +106,7 @@ PY
 ## 5. 自动检查
 
 ```bash
-python3 -c "v=int.from_bytes(bytes([0x2A,0x10]),'little'); print(v&3, bool((v>>2)&1), (v>>3)&3, (v>>5)*0.5)"
+python3 -c "v=int.from_bytes(bytes([0x8A,0x20]),'little'); print(v&3, bool((v>>2)&1), (v>>3)&3, (v>>5)*0.5)"
 ```
 
 预期输出 `2 False 1 130.0`。

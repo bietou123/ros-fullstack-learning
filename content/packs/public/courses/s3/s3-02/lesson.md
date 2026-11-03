@@ -1,6 +1,6 @@
 # S3-02 · xacro 参数化
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。实验在 `ros:humble-ros-base` 容器内执行。
+> 验证状态：✅ 2026-11-03 在本地构建的 `ros:humble-xacro` 镜像（`ros:humble-ros-base` + `ros-humble-xacro`）内实测 xacro 展开与 `check_urdf` 均通过。`ros:humble-ros-base` 本身不含 xacro，需使用该扩展镜像（构建方式见 README）。
 
 ## 1. 现场类比
 
@@ -85,7 +85,11 @@ check_urdf /tmp/model.urdf
 
 ## 5. 自动检查
 
-镜像 `ros:humble-ros-base`：
+镜像 `ros:humble-xacro`（基于 `ros:humble-ros-base` + `ros-humble-xacro`；`ros-base` 本身不含 xacro）。构建：
+
+```bash
+docker build -t ros:humble-xacro scripts/experiment-images/ros-humble-xacro
+```
 
 ```bash
 source /opt/ros/humble/setup.bash && command -v xacro

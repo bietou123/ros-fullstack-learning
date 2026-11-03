@@ -1,6 +1,6 @@
 # S2-05 · lifecycle 与 composition
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器。
+> 验证状态：✅ 2026-11-03 在 `ros:humble-ros-base` 容器内实测 `ros2 lifecycle` / `ros2 component` 子命令与相关包存在性检查均通过。受管节点运行与状态切换为演示流程，未在该镜像内启动实际节点。
 
 ## 1. 现场类比
 
@@ -80,8 +80,8 @@ ros2 component list
 镜像 `ros:humble-ros-base`：
 
 ```bash
-source /opt/ros/humble/setup.bash && ros2 lifecycle --help | head -n 3
-source /opt/ros/humble/setup.bash && ros2 component --help | head -n 3
+source /opt/ros/humble/setup.bash && ros2 lifecycle set --help | grep -q transition
+source /opt/ros/humble/setup.bash && ros2 component --help | grep -q load
 ```
 
 ## 6. 常见故障

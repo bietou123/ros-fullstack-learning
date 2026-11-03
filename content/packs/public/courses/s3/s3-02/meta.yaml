@@ -9,10 +9,10 @@ sources: ["E_ROS与Linux命令手册"]
 experiment:
   id: "s3-02-xacro"
   ros: "ros2"
-  image: "ros:humble-ros-base"
+  image: "ros:humble-xacro"
   network: "host"
   commands:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:property name=\\\"len\\\" value=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\${len} 0.1 0.1\\\"/></geometry><origin xyz=\\\"\\${len/2} 0 0\\\"/></visual></link></robot>\" > /tmp/m.xacro && xacro /tmp/m.xacro > /tmp/m.urdf && grep -o 'box size=\\\"[^\\\"]*' /tmp/m.urdf && check_urdf /tmp/m.urdf'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:property name=\\\"len\\\" value=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\${len} 0.1 0.1\\\"/></geometry><origin xyz=\\\"\\${len/2} 0 0\\\"/></visual></link></robot>\" > /tmp/m.xacro && xacro /tmp/m.xacro > /tmp/m.urdf && grep box /tmp/m.urdf && check_urdf /tmp/m.urdf'"
   checks:
     - "bash -lc 'source /opt/ros/humble/setup.bash && command -v xacro'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && xacro --help 2>&1 | grep -q xacro'"

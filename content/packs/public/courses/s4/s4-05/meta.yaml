@@ -10,10 +10,10 @@ experiment:
   id: "s4-05-bitfield"
   ros: "none"
   commands:
-    - "python3 -c \"v=int.from_bytes(bytes([0x2A,0x10]),'little'); print(v&3, bool((v>>2)&1), (v>>3)&3, (v>>5)*0.5)\""
-    - "python3 -c \"v=int.from_bytes(bytes([0x2A,0x10]),'big'); print(v&3, (v>>3)&3, (v>>5)*0.5)\""
+    - "python3 -c \"v=int.from_bytes(bytes([0x8A,0x20]),'little'); print(v&3, bool((v>>2)&1), (v>>3)&3, (v>>5)*0.5)\""
+    - "python3 -c \"v=int.from_bytes(bytes([0x8A,0x20]),'big'); print(v&3, (v>>3)&3, (v>>5)*0.5)\""
   checks:
-    - "python3 -c \"v=int.from_bytes(bytes([0x2A,0x10]),'little'); assert (v&3)==2 and ((v>>3)&3)==1 and (v>>5)*0.5==130.0\""
+    - "python3 -c \"v=int.from_bytes(bytes([0x8A,0x20]),'little'); assert (v&3)==2 and ((v>>3)&3)==1 and (v>>5)*0.5==130.0\""
   timeoutSec: 60
   headless: true
 quiz:

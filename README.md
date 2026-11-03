@@ -19,6 +19,22 @@
 
 实验每个命令独立执行，结果实时回传；没有可用后端时返回 `no-backend` 或 `failed`，**不会伪造实验成功**。硬件、ROS、Docker 相关步骤若未在对应环境实测，课程中会标注「⚠ 未实测」。
 
+## 实验环境准备（Docker）
+
+Linux 端与 Windows（WSL2）端在实验声明了 `image` 时调用本机 Docker。首次使用前准备镜像：
+
+```bash
+docker pull ros:noetic-ros-base
+docker pull ros:noetic-perception
+docker pull ros:humble-ros-base
+# ros-base 不含 xacro（S3-02 / S3-06 需要），构建扩展镜像：
+docker build -t ros:humble-xacro scripts/experiment-images/ros-humble-xacro
+```
+
+- Windows 需要在 WSL2 发行版内安装 Docker 并将用户加入 `docker` 组，或在 Windows 上安装 Docker Desktop 并开启 WSL 集成。
+- Docker Hub 不可直连时可使用可用的镜像加速源拉取，再重新打回官方名称；具体加速地址随网络环境变化，不在仓库内固定。
+- 本地没有对应镜像时，实验会明确返回失败原因，不会伪造成功。
+
 ## 快速开始（开发）
 
 要求：Node.js 20+（推荐 22/24）、pnpm 10.33（仓库已固定 `packageManager`）。
@@ -47,7 +63,7 @@ pnpm dev            # 浏览器开发模式
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。
 
-GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.6 -f ref=main`。
+GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.7 -f ref=main`。
 
 ## 构建三端
 
@@ -114,7 +130,7 @@ docs              资料盘点、能力矩阵、课程地图、ADR、里程碑�
 ## 已知限制
 
 - arm64 deb 尚无对应硬件实机验证；Android APK 已签名并校验内容哈希，并在 Android 34 x86_64 无窗口模拟器上完成启动、离线学习、进度落盘与数据导出/导入验证，但**未做 Android 真机启动验证**
-- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；视频渲染与私有包 zip 媒体导入自 v0.1.5 起包含；私有内容包导出自 v0.1.6 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 / v0.1.4 / v0.1.5 资产保持原样
+- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；视频渲染与私有包 zip 媒体导入自 v0.1.5 起包含；私有内容包导出自 v0.1.6 起包含；WSL2 Docker 实验通道与全课程实验修正如 `ros:humble-xacro`、S2-04/S2-05/S1-07/S4-05 自 v0.1.7 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 / v0.1.4 / v0.1.5 / v0.1.6 资产保持原样
 - 依赖实车、真实 ROS 发行版、Docker 镜像或硬件的实验命令，课程内均标注「⚠ 未实测」；合成数据的自动检查可离线复现
 - 课程来源映射分两层：`docs/coverage.csv` 记录每份内部资料的直接归属，`docs/lesson-sources.csv` 记录每节课 `meta.yaml` 声明的来源；`pnpm verify` 要求 76/76 节均有可解析来源，但部分课程只到章级/通用手册，未逐文件对应到具体文档
 - 知识库 `teach` 覆盖率为 98/267（36.7%），低于任务书 60% 目标；销售/参考/datasheet 等资料不具备可实验性，未通过改标签凑数。详见 `docs/10_M5验收报告.md`

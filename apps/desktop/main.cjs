@@ -54,14 +54,40 @@ async function runExperiment(spec) {
   let timeout = (spec.timeoutSec || 120) * 1000
 
   if (backend === 'wsl2') {
+    const net = spec.network || 'none'
+    let useDocker = false
+    if (spec.image) {
+      const probe = await run('wsl.exe', ['-e', 'docker', 'info', '--format', '{{.ServerVersion}}'], 15000)
+      useDocker = probe.code === 0
+      if (!useDocker) {
+        const detail = (probe.stderr || probe.stdout || 'WSL2 中未找到可用的 docker').slice(0, 500)
+        return {
+          backend,
+          ok: false,
+          reason: 'no-backend',
+          steps: (spec.commands || []).map((cmd) => ({
+            cmd,
+            code: -1,
+            stdout: '',
+            stderr: `WSL2 中没有可用的 Docker。请在 WSL 内安装 docker 并将用户加入 docker 组后重试：${detail}`,
+            ms: 0,
+          })),
+          checks: (spec.checks || []).map((name) => ({ name, ok: false, detail: '未执行（WSL2 无 Docker）' })),
+        }
+      }
+    }
+    const exec = (cmd, t) =>
+      useDocker
+        ? run('wsl.exe', ['-e', 'docker', 'run', '--rm', '--network', net, spec.image, 'bash', '-lc', cmd], t)
+        : run('wsl.exe', ['-e', 'bash', '-lc', cmd], t)
     for (const cmd of spec.commands || []) {
-      const r = await run('wsl.exe', ['-e', 'bash', '-lc', cmd], timeout)
+      const r = await exec(cmd, timeout)
       steps.push({ cmd, ...r })
       timeout = Math.max(1000, timeout - r.ms)
     }
     const checks = []
     for (const c of spec.checks || []) {
-      const r = await run('wsl.exe', ['-e', 'bash', '-lc', c], timeout)
+      const r = await exec(c, timeout)
       checks.push({ name: c, ok: r.code === 0, detail: (r.stdout || r.stderr).slice(0, 500) })
     }
     return { backend, ok: steps.every((s) => s.code === 0) && checks.every((c) => c.ok), steps, checks }
@@ -161,6 +187,9 @@ async function runSmoke() {
       "fetch('content/build-info.json').then((r) => r.json()).then((j) => j.commit).catch(() => '')",
     )
     const commitShown = Boolean(buildCommit) && settingsText.includes(buildCommit)
+    const packVersion = await win.webContents.executeJavaScript(
+      "fetch('content/pack.json').then((r) => r.json()).then((j) => j.manifest.version).catch(() => '')",
+    )
 
     let backend = 'unknown'
     let experimentOk = false
@@ -177,6 +206,29 @@ async function runSmoke() {
     } catch {}
     const expectedHash = process.env.RL_EXPECTED_HASH
     const hashOk = expectedHash ? settingsText.includes(expectedHash) : true
+
+    let realExperiment = null
+    if (process.env.RL_SMOKE_EXPERIMENT) {
+      const lessonId = JSON.stringify(process.env.RL_SMOKE_EXPERIMENT)
+      try {
+        const res = await win.webContents.executeJavaScript(`(async () => {
+          const pack = await fetch('content/pack.json').then((r) => r.json())
+          const lesson = pack.lessons.find((l) => l.id === ${lessonId})
+          if (!lesson || !lesson.experiment) return { error: 'no experiment for ' + ${lessonId} }
+          return await window.__RL_PLATFORM__.runExperiment(lesson.experiment)
+        })()`)
+        realExperiment = {
+          lesson: process.env.RL_SMOKE_EXPERIMENT,
+          ok: Boolean(res && res.ok),
+          backend: res && res.backend,
+          error: res && res.error,
+          steps: res && res.steps ? res.steps.map((s) => ({ code: s.code, out: (s.stdout || '').slice(0, 200) })) : [],
+          checks: res && res.checks ? res.checks.map((c) => ({ ok: c.ok, name: c.name })) : [],
+        }
+      } catch (e) {
+        realExperiment = { lesson: process.env.RL_SMOKE_EXPERIMENT, ok: false, error: String(e) }
+      }
+    }
 
     const privatePack = await win.webContents.executeJavaScript(`(async () => {
       try {
@@ -402,7 +454,7 @@ async function runSmoke() {
       searchOk: searchText.includes('条结果') && searchCards > 0,
       searchCards,
       progressOk: progressSvg > 0 && progressText.includes('能力进度'),
-      settingsOk: settingsText.includes('内容包') && settingsText.includes('0.1.0'),
+      settingsOk: settingsText.includes('内容包') && Boolean(packVersion) && settingsText.includes(packVersion),
       commitShown,
       hashOk,
       backend,
@@ -414,10 +466,12 @@ async function runSmoke() {
       notesOk: noteSaved === 1 && noteAfterReload === 1 && noteAfterDelete === 0,
       privatePackOk,
       privatePack: pk,
+      realExperiment,
     }
     console.log('SMOKE_RESULT ' + JSON.stringify(result))
+    const realExperimentOk = !process.env.RL_SMOKE_EXPERIMENT || Boolean(realExperiment && realExperiment.ok)
     app.exit(
-      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.commitShown && result.hashOk && result.quizOk && result.wrongBookOk && result.stageQuizOk && result.notesOk && result.privatePackOk
+      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.commitShown && result.hashOk && result.quizOk && result.wrongBookOk && result.stageQuizOk && result.notesOk && result.privatePackOk && realExperimentOk
         ? 0
         : 1,
     )
