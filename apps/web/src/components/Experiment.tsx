@@ -39,7 +39,7 @@ export default function Experiment({ spec }: { spec: ExperimentSpec }) {
 
       {!canRun && (
         <div className="notice">
-          当前设备不能运行实验。可以查看步骤，或到设置页配置 Linux 后端（WSL2 / SSH）。
+          当前设备不能运行实验。可以查看步骤与检查项；Windows 需 WSL2 + Docker，Linux 需本机 Docker，Android 端暂为只读模式。
         </div>
       )}
 

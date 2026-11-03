@@ -17,6 +17,8 @@ export default function LessonPage({ lessonId }: { lessonId: string }) {
   const mainRef = useRef<Element | null>(null)
   const lastSave = useRef(0)
   const visitedAt = useRef(Date.now())
+  const progressRef = useRef(progress)
+  progressRef.current = progress
 
   const lesson = pack?.lessons.find((l) => l.id === lessonId)
   const idx = pack?.lessons.findIndex((l) => l.id === lessonId) ?? -1
@@ -42,7 +44,8 @@ export default function LessonPage({ lessonId }: { lessonId: string }) {
       const p = denom <= 0 ? 100 : Math.min(100, Math.round((el.scrollTop / denom) * 100))
       setPct((old) => Math.max(old, p))
       const now = Date.now()
-      if (now - lastSave.current > 4000 && p > (progress[lessonId]?.percent ?? 0)) {
+      const saved = progressRef.current[lessonId]?.percent ?? 0
+      if (now - lastSave.current > 4000 && p > saved) {
         lastSave.current = now
         setProgress(lessonId, p, Math.round((now - visitedAt.current) / 1000)).then(refresh)
       }
@@ -50,7 +53,7 @@ export default function LessonPage({ lessonId }: { lessonId: string }) {
     el.addEventListener('scroll', onScroll, { passive: true })
     onScroll()
     return () => el.removeEventListener('scroll', onScroll)
-  }, [lessonId, progress[lessonId]?.percent])
+  }, [lessonId])
 
   const totalQuiz = useMemo(() => lesson?.quiz.length ?? 0, [lesson])
 

@@ -10,6 +10,7 @@ experiment:
   id: "s1-05-launch"
   ros: "ros1"
   image: "ros:noetic-ros-base"
+  network: "host"
   commands:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && rosparam set /rl_speed_limit 1.2 && rosparam get /rl_speed_limit && timeout 5 rosservice list | head -n 5; true'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v roslaunch rosservice rosparam'"

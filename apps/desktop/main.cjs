@@ -168,6 +168,17 @@ async function runSmoke() {
     const img2 = await win.webContents.capturePage()
     fs.writeFileSync(path.join(outDir, 'desktop-lesson.png'), img2.toPNG())
 
+    // 滚动后进度会自动保存并刷新全局状态；此时不得把阅读位置弹回顶部
+    const scrollProbe = await win.webContents.executeJavaScript(`(async () => {
+      const wait = (ms) => new Promise((r) => setTimeout(r, ms))
+      const el = document.querySelector('.main')
+      const max = el.scrollHeight - el.clientHeight
+      el.scrollTop = Math.min(1200, max)
+      const target = el.scrollTop
+      await wait(6000)
+      return { target, after: el.scrollTop, max }
+    })()`)
+
     await win.webContents.executeJavaScript("location.hash = '#/search?q=CAN'")
     await new Promise((r) => setTimeout(r, 1200))
     const searchText = await win.webContents.executeJavaScript('document.body.innerText')
@@ -450,6 +461,8 @@ async function runSmoke() {
       platform: 'desktop',
       homeOk: homeText.includes('工业机器人全栈'),
       lessonOk: lessonText.includes('机器人全栈地图'),
+      scrollOk: scrollProbe.max > 0 && scrollProbe.target > 0 && Math.abs(scrollProbe.after - scrollProbe.target) <= 2,
+      scrollProbe,
       hashShown: /[0-9a-f]{64}/.test(lessonText) || true,
       searchOk: searchText.includes('条结果') && searchCards > 0,
       searchCards,
@@ -471,7 +484,7 @@ async function runSmoke() {
     console.log('SMOKE_RESULT ' + JSON.stringify(result))
     const realExperimentOk = !process.env.RL_SMOKE_EXPERIMENT || Boolean(realExperiment && realExperiment.ok)
     app.exit(
-      result.homeOk && result.lessonOk && result.searchOk && result.progressOk && result.settingsOk && result.commitShown && result.hashOk && result.quizOk && result.wrongBookOk && result.stageQuizOk && result.notesOk && result.privatePackOk && realExperimentOk
+      result.homeOk && result.lessonOk && result.scrollOk && result.searchOk && result.progressOk && result.settingsOk && result.commitShown && result.hashOk && result.quizOk && result.wrongBookOk && result.stageQuizOk && result.notesOk && result.privatePackOk && realExperimentOk
         ? 0
         : 1,
     )

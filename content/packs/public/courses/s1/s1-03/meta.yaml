@@ -10,6 +10,7 @@ experiment:
   id: "s1-03-rospy"
   ros: "ros1"
   image: "ros:noetic-ros-base"
+  network: "host"
   commands:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && python3 -c \"import rospy; print(rospy.__file__)\"'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 8 rostopic pub -r 5 /rl_chat std_msgs/String \"data: hi\" >/dev/null 2>&1 &) && sleep 2 && timeout 5 rostopic echo -n 2 /rl_chat; true'"

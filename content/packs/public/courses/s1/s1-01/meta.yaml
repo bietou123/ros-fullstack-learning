@@ -10,6 +10,7 @@ experiment:
   id: "s1-01-nodes"
   ros: "ros1"
   image: "ros:noetic-ros-base"
+  network: "host"
   commands:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && rosversion -d && rospack find roscpp'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 8 rostopic pub -r 5 /rl_demo std_msgs/String \"data: hello\" >/dev/null 2>&1 &) && sleep 2 && timeout 5 rostopic list && timeout 5 rosnode list; true'"

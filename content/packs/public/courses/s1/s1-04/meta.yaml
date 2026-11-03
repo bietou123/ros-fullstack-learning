@@ -10,6 +10,7 @@ experiment:
   id: "s1-04-topic"
   ros: "ros1"
   image: "ros:noetic-ros-base"
+  network: "host"
   commands:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 12 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 2 && timeout 6 rostopic hz /rl_demo; true'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && rosmsg show std_msgs/String | head -n 3'"

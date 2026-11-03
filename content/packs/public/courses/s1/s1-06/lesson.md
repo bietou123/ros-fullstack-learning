@@ -1,6 +1,6 @@
 # S1-06 · rosbag 录制与回放
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。容器实验见第 5 节。
+> 验证状态：✅ 2026-11-03 在 `ros:noetic-ros-base` 容器内实测：启动 roscore → 20 Hz 发布 → `rosbag record` → `rosbag info` → `rosbag play` → `rostopic echo` 收到回放消息，整条链路在单容器内完成。
 
 ## 1. 现场类比
 
@@ -73,14 +73,20 @@ rosbag filter /tmp/demo.bag /tmp/only_demo.bag 'topic == "/rl_demo"'
 
 ## 5. 自动检查
 
-镜像 `ros:noetic-ros-base`：
+镜像 `ros:noetic-ros-base`。单容器内可以同时跑 master、发布者、录制与回放，下面是一条自包含的完整链路：
 
 ```bash
-source /opt/ros/noetic/setup.bash && which rosbag
-source /opt/ros/noetic/setup.bash && rosbag --help | head -n 2
+source /opt/ros/noetic/setup.bash
+(roscore >/tmp/rc.log 2>&1 &) && sleep 6
+(timeout 10 rostopic pub -r 20 /rl_demo std_msgs/String "data: x" >/dev/null 2>&1 & echo $! >/tmp/pub.pid)
+sleep 1 && timeout 5 rosbag record -O /tmp/demo.bag /rl_demo
+rosbag info /tmp/demo.bag
+kill $(cat /tmp/pub.pid) 2>/dev/null || true
+(timeout 10 rosbag play /tmp/demo.bag >/tmp/play.log 2>&1 &)
+sleep 1 && rostopic echo -n 1 /rl_demo
 ```
 
-记录与回放需要持续运行的 master，容器是单次执行的，因此本节只在容器内验工具链，产物请在本机 Noetic 环境生成。
+自动检查会断言回放后 `rostopic echo` 能收到 `data:` 消息，而不是只看 `rosbag --help` 是否存在。
 
 ## 6. 常见故障
 

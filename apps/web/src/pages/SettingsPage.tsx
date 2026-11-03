@@ -228,7 +228,7 @@ export default function SettingsPage() {
           <dt>当前</dt><dd>{backend}</dd>
           <dt>说明</dt>
           <dd>
-            deb 端使用本地 Docker / ROS；exe 端使用 WSL2 或远程 SSH；apk 端使用远程 SSH，未配置时进入只读学习模式。
+            deb 端使用本地 Docker / ROS；exe 端使用 WSL2 + Docker；apk 端暂未接入 SSH，进入只读学习模式。
             界面、步骤与检查项三端一致。
           </dd>
         </dl>

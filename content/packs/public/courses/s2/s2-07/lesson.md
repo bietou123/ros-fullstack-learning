@@ -1,6 +1,6 @@
 # S2-07 · ros2 bag 与诊断
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器（`--network host`）。
+> 验证状态：✅ 2026-11-03 在 `ros:humble-ros-base` 容器内实测：20 Hz 发布 → `ros2 bag record` → `ros2 bag info` → `ros2 bag play` → `ros2 topic echo --once` 收到回放消息。
 
 ## 1. 现场类比
 
@@ -66,12 +66,19 @@ ros2 topic hz /rl_demo
 
 ## 5. 自动检查
 
-镜像 `ros:humble-ros-base`：
+镜像 `ros:humble-ros-base`，容器需要 `--network host` 让 DDS 发现正常。自包含的录制→回放链路：
 
 ```bash
-source /opt/ros/humble/setup.bash && ros2 bag --help | head -n 5
-source /opt/ros/humble/setup.bash && python3 -c "import sqlite3; print(sqlite3.sqlite_version)"
+source /opt/ros/humble/setup.bash
+(timeout 12 ros2 topic pub -r 20 /rl_demo std_msgs/msg/String "{data: x}" >/dev/null 2>&1 & echo $! >/tmp/pub.pid)
+sleep 3 && timeout 5 ros2 bag record -o /tmp/demo /rl_demo
+ros2 bag info /tmp/demo
+kill $(cat /tmp/pub.pid) 2>/dev/null || true
+(timeout 10 ros2 bag play /tmp/demo >/tmp/play.log 2>&1 &)
+sleep 1 && ros2 topic echo --once /rl_demo
 ```
+
+自动检查断言回放后能收到 `data:` 消息，而不是只检查 `ros2 bag --help`。
 
 ## 6. 常见故障
 

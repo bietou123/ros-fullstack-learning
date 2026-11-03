@@ -13,10 +13,10 @@ experiment:
   network: "host"
   commands:
     - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 14 ros2 topic pub -r 20 /rl_demo std_msgs/msg/String \"{data: x}\" >/dev/null 2>&1 &) && sleep 3 && timeout 5 ros2 bag record -o /tmp/demo /rl_demo; ros2 bag info /tmp/demo; true'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import sqlite3; print(sqlite3.sqlite_version)\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 topic pub -r 20 /rl_demo std_msgs/msg/String \"{data: x}\" >/dev/null 2>&1 & echo $! >/tmp/pub.pid) && sleep 3 && timeout 5 ros2 bag record -o /tmp/demo /rl_demo; ros2 bag info /tmp/demo; kill $(cat /tmp/pub.pid) 2>/dev/null || true; sleep 1; (timeout 10 ros2 bag play /tmp/demo >/tmp/play.log 2>&1 &); sleep 1; timeout 8 ros2 topic echo --once /rl_demo'"
   checks:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 bag --help 2>&1 | grep -q record'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 bag info --help 2>&1 | grep -q info'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 10 ros2 topic pub -r 20 /rl_demo std_msgs/msg/String \"{data: x}\" >/dev/null 2>&1 & echo $! >/tmp/pub.pid) && sleep 3 && timeout 4 ros2 bag record -o /tmp/demo /rl_demo; kill $(cat /tmp/pub.pid) 2>/dev/null || true; sleep 1; (timeout 8 ros2 bag play /tmp/demo >/tmp/play.log 2>&1 &); sleep 1; timeout 6 ros2 topic echo --once /rl_demo | grep -q data:'"
   timeoutSec: 300
   headless: true
 quiz:
