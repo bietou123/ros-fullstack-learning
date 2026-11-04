@@ -16,7 +16,7 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && command -v check_urdf && command -v xacro'"
   checks:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list 2>/dev/null | grep -q robot_state_publisher'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v xacro'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl_excavator\\\"><xacro:property name=\\\"boom_len\\\" value=\\\"2.0\\\"/><link name=\\\"base_link\\\"/><link name=\\\"boom_link\\\"/><joint name=\\\"boom_joint\\\" type=\\\"revolute\\\"><parent link=\\\"base_link\\\"/><child link=\\\"boom_link\\\"/><origin xyz=\\\"0 0 0.5\\\"/><axis xyz=\\\"0 1 0\\\"/><limit lower=\\\"-1.2\\\" upper=\\\"1.2\\\" effort=\\\"100\\\" velocity=\\\"1.0\\\"/></joint></robot>\" > /tmp/chain.xacro && xacro /tmp/chain.xacro > /tmp/chain.urdf && check_urdf /tmp/chain.urdf | grep -q \"Successfully Parsed XML\" && check_urdf /tmp/chain.urdf | grep -q boom_link'"
   timeoutSec: 300
   headless: true
 quiz:

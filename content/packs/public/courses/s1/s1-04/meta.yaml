@@ -15,7 +15,7 @@ experiment:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 12 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 2 && timeout 6 rostopic hz /rl_demo; true'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && rosmsg show std_msgs/String | head -n 3'"
   checks:
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v rostopic && command -v rosmsg'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 10 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 2 && timeout 6 rostopic hz --window=20 /rl_demo | grep -m 1 \"average rate\"'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && rosmsg show std_msgs/String | grep -q data'"
   timeoutSec: 300
   headless: true

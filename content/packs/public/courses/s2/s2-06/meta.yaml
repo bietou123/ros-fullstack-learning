@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 launch --help | head -n 6'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 param --help | head -n 6'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 launch --help | grep -q launch'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 param --help | grep -q dump'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && rm -f /tmp/rl_launch.txt && printf \"%s\\n\" \"from launch import LaunchDescription\" \"from launch.actions import ExecuteProcess\" \"def generate_launch_description():\" \"    return LaunchDescription([ExecuteProcess(cmd=[\\\"bash\\\",\\\"-lc\\\",\\\"echo RL_LAUNCH_OK > /tmp/rl_launch.txt\\\"], output=\\\"screen\\\")])\" > /tmp/rl.launch.py && timeout 20 ros2 launch /tmp/rl.launch.py >/dev/null 2>&1; grep -q RL_LAUNCH_OK /tmp/rl_launch.txt'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (python3 -c \"import rclpy; rclpy.init(); n = rclpy.create_node(\\\"rl_param_node\\\"); n.declare_parameter(\\\"speed\\\", 1.5); rclpy.spin(n)\" >/tmp/pn.log 2>&1 &) && sleep 5 && ros2 param get /rl_param_node speed | grep -q 1.5 && ros2 param dump /rl_param_node | grep -q speed'"
   timeoutSec: 300
   headless: true
 quiz:

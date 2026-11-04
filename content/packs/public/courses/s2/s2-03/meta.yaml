@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 14 ros2 topic pub -r 5 /rl_demo std_msgs/msg/String \"{data: hi}\" --qos-reliability best_effort --qos-depth 5 >/dev/null 2>&1 &) && sleep 3 && timeout 6 ros2 topic info -v /rl_demo'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy; print(rclpy.__file__)\"'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 topic pub --help 2>&1 | grep -q qos-reliability'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 topic pub -r 5 /rl_demo std_msgs/msg/String \"{data: hi}\" --qos-reliability best_effort --qos-depth 5 >/dev/null 2>&1 &) && sleep 4 && timeout 6 ros2 topic info -v /rl_demo | grep -qi \"BEST_EFFORT\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import rclpy; from rclpy.node import Node; rclpy.init(); n = Node(\\\"rl_probe\\\"); print(n.get_name()); rclpy.shutdown()\" | grep -q rl_probe'"
   timeoutSec: 300
   headless: true
 quiz:

@@ -25,15 +25,19 @@ function run(cmd, args, timeout = 120000) {
   })
 }
 
+async function wslDistro() {
+  const w = await run('wsl.exe', ['-l', '-q'], 8000)
+  if (w.code !== 0) return null
+  return w.stdout.replace(/\0/g, '').split(/\r?\n/).map((s) => s.trim()).find(Boolean) || null
+}
+
 async function detectBackend() {
   if (process.platform === 'linux') {
     const d = await run('bash', ['-lc', 'command -v docker || command -v podman'], 5000)
     return d.code === 0 ? 'local' : 'read-only'
   }
   if (process.platform === 'win32') {
-    const w = await run('wsl.exe', ['-l', '-q'], 8000)
-    if (w.code === 0 && w.stdout.replace(/\0/g, '').trim()) return 'wsl2'
-    return 'read-only'
+    return (await wslDistro()) ? 'wsl2' : 'read-only'
   }
   return 'read-only'
 }
@@ -54,10 +58,20 @@ async function runExperiment(spec) {
   let timeout = (spec.timeoutSec || 120) * 1000
 
   if (backend === 'wsl2') {
+    const distro = await wslDistro()
+    if (!distro) {
+      return {
+        backend,
+        ok: false,
+        reason: 'no-backend',
+        steps: (spec.commands || []).map((cmd) => ({ cmd, code: -1, stdout: '', stderr: '未找到可用的 WSL 发行版', ms: 0 })),
+        checks: (spec.checks || []).map((name) => ({ name, ok: false, detail: '未执行（无 WSL 发行版）' })),
+      }
+    }
     const net = spec.network || 'none'
     let useDocker = false
     if (spec.image) {
-      const probe = await run('wsl.exe', ['-e', 'docker', 'info', '--format', '{{.ServerVersion}}'], 15000)
+      const probe = await run('wsl.exe', ['-d', distro, '-e', 'docker', 'info', '--format', '{{.ServerVersion}}'], 15000)
       useDocker = probe.code === 0
       if (!useDocker) {
         const detail = (probe.stderr || probe.stdout || 'WSL2 中未找到可用的 docker').slice(0, 500)
@@ -78,8 +92,8 @@ async function runExperiment(spec) {
     }
     const exec = (cmd, t) =>
       useDocker
-        ? run('wsl.exe', ['-e', 'docker', 'run', '--rm', '--network', net, spec.image, 'bash', '-lc', cmd], t)
-        : run('wsl.exe', ['-e', 'bash', '-lc', cmd], t)
+        ? run('wsl.exe', ['-d', distro, '-e', 'docker', 'run', '--rm', '--network', net, spec.image, 'bash', '-lc', cmd], t)
+        : run('wsl.exe', ['-d', distro, '-e', 'bash', '-lc', cmd], t)
     for (const cmd of spec.commands || []) {
       const r = await exec(cmd, timeout)
       steps.push({ cmd, ...r })
@@ -210,7 +224,7 @@ async function runSmoke() {
         const r = await runExperiment({
           commands: ['printf RL_BACKEND_OK'],
           checks: ['printf RL_BACKEND_OK | grep -q RL_BACKEND_OK'],
-          timeoutSec: 10,
+          timeoutSec: 45,
         })
         experimentOk = r.ok
       }

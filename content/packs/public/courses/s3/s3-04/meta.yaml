@@ -16,7 +16,7 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -c joint_state_publisher; true'"
   checks:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q robot_state_publisher'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 topic --help | grep -q list'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot name=\\\"r\\\"><link name=\\\"base_link\\\"/></robot>\" > /tmp/r.urdf && (ros2 run robot_state_publisher robot_state_publisher /tmp/r.urdf >/tmp/rsp.log 2>&1 &) && sleep 8 && ros2 node list | grep -q robot_state_publisher'"
   timeoutSec: 300
   headless: true
 quiz:

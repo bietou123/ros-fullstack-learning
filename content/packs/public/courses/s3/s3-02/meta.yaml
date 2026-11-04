@@ -12,10 +12,10 @@ experiment:
   image: "ros:humble-xacro"
   network: "host"
   commands:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:property name=\\\"len\\\" value=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\${len} 0.1 0.1\\\"/></geometry><origin xyz=\\\"\\${len/2} 0 0\\\"/></visual></link></robot>\" > /tmp/m.xacro && xacro /tmp/m.xacro > /tmp/m.urdf && grep box /tmp/m.urdf && check_urdf /tmp/m.urdf'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:property name=\\\"boom_len\\\" value=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\${boom_len} 0.1 0.1\\\"/></geometry><origin xyz=\\\"\\${boom_len/2} 0 0\\\"/></visual></link></robot>\" > /tmp/m.xacro && xacro /tmp/m.xacro > /tmp/m.urdf && grep box /tmp/m.urdf && check_urdf /tmp/m.urdf'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v xacro'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && xacro --help 2>&1 | grep -q xacro'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:property name=\\\"boom_len\\\" value=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\${boom_len} 0.1 0.1\\\"/></geometry><origin xyz=\\\"\\${boom_len/2} 0 0\\\"/></visual></link></robot>\" > /tmp/c.xacro && xacro /tmp/c.xacro > /tmp/c.urdf && grep -q \"size=\\\"2.0 0.1 0.1\\\"\" /tmp/c.urdf && check_urdf /tmp/c.urdf | grep -q \"Successfully Parsed XML\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot xmlns:xacro=\\\"http://www.ros.org/wiki/xacro\\\" name=\\\"rl\\\"><xacro:arg name=\\\"boom_len\\\" default=\\\"2.0\\\"/><link name=\\\"l\\\"><visual><geometry><box size=\\\"\\$(arg boom_len) 0.1 0.1\\\"/></geometry></visual></link></robot>\" > /tmp/c2.xacro && xacro /tmp/c2.xacro boom_len:=2.5 > /tmp/c2.urdf && grep -q \"size=\\\"2.5 0.1 0.1\\\"\" /tmp/c2.urdf && check_urdf /tmp/c2.urdf | grep -q \"Successfully Parsed XML\"'"
   timeoutSec: 300
   headless: true
 quiz:

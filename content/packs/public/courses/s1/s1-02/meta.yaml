@@ -13,8 +13,8 @@ experiment:
   commands:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && rm -rf /tmp/ws && mkdir -p /tmp/ws/src && cd /tmp/ws && catkin_make -j1 >/tmp/b.log 2>&1 && cd src && catkin_create_pkg rl_demo rospy std_msgs >/tmp/c.log 2>&1 && cd .. && catkin_make -j1 >>/tmp/b.log 2>&1 && source devel/setup.bash && rospack find rl_demo'"
   checks:
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v catkin_make'"
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v catkin_create_pkg'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rm -rf /tmp/wsc && mkdir -p /tmp/wsc/src && cd /tmp/wsc/src && catkin_create_pkg rl_demo rospy std_msgs >/dev/null && grep -q \"<name>rl_demo</name>\" rl_demo/package.xml && grep -q \"<exec_depend>rospy</exec_depend>\" rl_demo/package.xml && grep -q \"project(rl_demo)\" rl_demo/CMakeLists.txt'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rm -rf /tmp/wsc && mkdir -p /tmp/wsc/src && cd /tmp/wsc/src && catkin_create_pkg rl_demo rospy std_msgs >/dev/null && export ROS_PACKAGE_PATH=/tmp/wsc/src:$ROS_PACKAGE_PATH && rospack find rl_demo | grep -q rl_demo'"
   timeoutSec: 420
   headless: true
 quiz:

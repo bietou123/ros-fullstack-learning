@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && rosparam set /rl_speed_limit 1.2 && rosparam get /rl_speed_limit && timeout 5 rosservice list | head -n 5; true'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v roslaunch rosservice rosparam'"
   checks:
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v roslaunch'"
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v rosparam && command -v rosservice'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && rosparam set /rl_speed_limit 1.2 && rosparam get /rl_speed_limit | grep -q 1.2 && rosparam list | grep -q rl_speed_limit'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && timeout 5 rosservice list | grep -q get_loggers'"
   timeoutSec: 300
   headless: true
 quiz:

@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 lifecycle --help | sed -n 1,6p && ros2 lifecycle set --help | sed -n 1,8p'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 component --help | sed -n 1,6p && ros2 pkg list | grep -E \"lifecycle|component\" | sed -n 1,5p'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 lifecycle set --help | grep -q transition'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 component --help | grep -q load'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (python3 -c \"import rclpy; from rclpy.lifecycle import Node, TransitionCallbackReturn; L = type(\\\"L\\\", (Node,), {\\\"on_configure\\\": lambda self, state: TransitionCallbackReturn.SUCCESS, \\\"on_activate\\\": lambda self, state: TransitionCallbackReturn.SUCCESS}); rclpy.init(); n = L(\\\"rl_lc\\\"); rclpy.spin(n)\" >/tmp/lc.log 2>&1 &) && sleep 5 && ros2 lifecycle get /rl_lc | grep -q unconfigured && ros2 lifecycle set /rl_lc configure | grep -q successful && ros2 lifecycle get /rl_lc | grep -q inactive'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (ros2 run rclcpp_components component_container >/tmp/cc.log 2>&1 &) && sleep 5 && ros2 component list | grep -q ComponentManager'"
   timeoutSec: 300
   headless: true
 quiz:

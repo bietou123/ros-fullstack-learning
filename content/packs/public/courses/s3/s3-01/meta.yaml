@@ -14,7 +14,7 @@ experiment:
   commands:
     - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot name=\\\"rl_demo\\\"><link name=\\\"base_link\\\"/><link name=\\\"arm_link\\\"/><joint name=\\\"arm_joint\\\" type=\\\"revolute\\\"><parent link=\\\"base_link\\\"/><child link=\\\"arm_link\\\"/><origin xyz=\\\"0 0 0.5\\\"/><axis xyz=\\\"0 1 0\\\"/><limit lower=\\\"-1.57\\\" upper=\\\"1.57\\\" effort=\\\"100\\\" velocity=\\\"1.0\\\"/></joint></robot>\" > /tmp/demo.urdf && check_urdf /tmp/demo.urdf'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v check_urdf'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && printf \"%s\" \"<?xml version=\\\"1.0\\\"?><robot name=\\\"rl_demo\\\"><link name=\\\"base_link\\\"/><link name=\\\"arm_link\\\"/><joint name=\\\"arm_joint\\\" type=\\\"revolute\\\"><parent link=\\\"base_link\\\"/><child link=\\\"arm_link\\\"/><origin xyz=\\\"0 0 0.5\\\"/><axis xyz=\\\"0 1 0\\\"/><limit lower=\\\"-1.57\\\" upper=\\\"1.57\\\" effort=\\\"100\\\" velocity=\\\"1.0\\\"/></joint></robot>\" > /tmp/c.urdf && check_urdf /tmp/c.urdf | grep -q \"Successfully Parsed XML\" && check_urdf /tmp/c.urdf | grep -q arm_link'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q urdf'"
   timeoutSec: 300
   headless: true

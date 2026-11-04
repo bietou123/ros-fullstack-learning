@@ -14,8 +14,8 @@ experiment:
   commands:
     - "bash -lc 'source /opt/ros/humble/setup.bash && rm -rf /tmp/ws && mkdir -p /tmp/ws/src && cd /tmp/ws/src && ros2 pkg create --build-type ament_python rl_demo --dependencies rclpy std_msgs >/tmp/c.log 2>&1 && cd /tmp/ws && colcon build --packages-select rl_demo >/tmp/b.log 2>&1 && source install/setup.bash && ros2 pkg prefix rl_demo'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && command -v colcon'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg create --help | grep -q ament_python'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && rm -rf /tmp/wsc && mkdir -p /tmp/wsc/src && cd /tmp/wsc/src && ros2 pkg create --build-type ament_python rl_demo >/dev/null 2>&1 && cd /tmp/wsc && colcon build --packages-select rl_demo >/dev/null 2>&1 && test -f install/rl_demo/share/ament_index/resource_index/packages/rl_demo'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && rm -rf /tmp/wsc2 && mkdir -p /tmp/wsc2/src && cd /tmp/wsc2/src && ros2 pkg create --build-type ament_python rl_demo --dependencies rclpy std_msgs >/dev/null 2>&1 && grep -q \"<name>rl_demo</name>\" rl_demo/package.xml && grep -q \"<depend>rclpy</depend>\" rl_demo/package.xml && grep -q \"<build_type>ament_python</build_type>\" rl_demo/package.xml'"
   timeoutSec: 420
   headless: true
 quiz:

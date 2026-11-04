@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 12 rosrun tf static_transform_publisher 0 0 1 0 0 0 base_link boom_base 100 >/dev/null 2>&1 &) && sleep 2 && timeout 6 rosrun tf tf_echo base_link boom_base; true'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find tf && rospack find tf2_ros'"
   checks:
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find tf | grep -q tf'"
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && rospack find tf2_ros | grep -q tf2_ros'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 10 rosrun tf static_transform_publisher 0 0 1 0 0 0 base_link boom_base 100 >/dev/null 2>&1 &) && sleep 2 && timeout 6 rosrun tf tf_echo base_link boom_base | grep -m 1 \"0.000, 0.000, 1.000\"'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && rosmsg show tf2_msgs/TFMessage | grep -q TransformStamped'"
   timeoutSec: 300
   headless: true
 quiz:

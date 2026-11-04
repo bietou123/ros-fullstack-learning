@@ -15,7 +15,7 @@ experiment:
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 10 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 1 && timeout 5 rosbag record -O /tmp/demo.bag /rl_demo; rosbag info /tmp/demo.bag | head -n 12; true'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 10 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 & echo $! >/tmp/pub.pid) && sleep 1 && timeout 5 rosbag record -O /tmp/demo.bag /rl_demo; rosbag info /tmp/demo.bag | head -n 10; kill $(cat /tmp/pub.pid) 2>/dev/null || true; sleep 1; (timeout 10 rosbag play /tmp/demo.bag >/tmp/play.log 2>&1 &); sleep 1; timeout 8 rostopic echo -n 1 /rl_demo'"
   checks:
-    - "bash -lc 'source /opt/ros/noetic/setup.bash && command -v rosbag'"
+    - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 8 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 &) && sleep 1 && timeout 4 rosbag record -O /tmp/c1.bag /rl_demo >/dev/null 2>&1; rosbag info /tmp/c1.bag | grep -q \"/rl_demo\"'"
     - "bash -lc 'source /opt/ros/noetic/setup.bash && (roscore >/tmp/rc.log 2>&1 &) && sleep 6 && (timeout 8 rostopic pub -r 20 /rl_demo std_msgs/String \"data: x\" >/dev/null 2>&1 & echo $! >/tmp/pub.pid) && sleep 1 && timeout 4 rosbag record -O /tmp/demo.bag /rl_demo; kill $(cat /tmp/pub.pid) 2>/dev/null || true; sleep 1; (timeout 8 rosbag play /tmp/demo.bag >/tmp/play.log 2>&1 &); sleep 1; timeout 6 rostopic echo -n 1 /rl_demo | grep -q data:'"
   timeoutSec: 300
   headless: true
