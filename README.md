@@ -68,7 +68,7 @@ pnpm dev            # 浏览器开发模式
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。
 
-GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.17 -f ref=main`。
+GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.18 -f ref=main`。
 
 课程实验回归默认只在本地/手动执行（需要 Docker 与课程镜像，耗时较长）：`gh workflow run verify-experiments.yml`，可选 `-f only=S1-01,S3-04` 只跑指定课程，结果以 `experiments.json` 工件上传。
 
@@ -137,9 +137,9 @@ docs              资料盘点、能力矩阵、课程地图、ADR、里程碑�
 ## 已知限制
 
 - arm64 deb 尚无对应硬件实机验证；Android APK 已签名并校验内容哈希，并在 Android 34 x86_64 无窗口模拟器上完成启动、离线学习、进度落盘与数据导出/导入验证，但**未做 Android 真机启动验证**
-- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；视频渲染与私有包 zip 媒体导入自 v0.1.5 起包含；私有内容包导出自 v0.1.6 起包含；WSL2 Docker 实验通道与全课程实验修正如 `ros:humble-xacro`、S2-04/S2-05/S1-07/S4-05 自 v0.1.7 起包含；阅读进度自动保存后保持滚动位置、S1 容器实验显式声明 host 网络、S1-06/S2-07 真实录制→回放→订阅链路自 v0.1.8 起包含；S1–S3 行为级实验检查与 WSL 显式发行版调用自 v0.1.9 起包含；课程验证状态校准与 S2-01/S2-08/S3-03 行为检查强化自 v0.1.10 起包含；S0-02/S3-01/S3-04/S3-06 检查改为行为断言、S4-07 验证状态校准自 v0.1.11 起包含；S0-04/S8-01/S8-02/S10-05 验证状态按实测校准自 v0.1.12 起包含；S8-02 对 systemd `degraded` 状态容忍（`is-system-running` 退出码语义）自 v0.1.13 起包含；S0-04 ufw 容器实测与 S4-02 WSL 无 vcan 模块提示自 v0.1.14 起包含；S4-02 vcan 在 QEMU 虚拟机实测通过自 v0.1.15 起包含；S3-04/S3-06 的 RViz 在 Xvfb + 软件渲染下实测自 v0.1.16 起包含；S3-06 的 `joint_state_publisher_gui` 滑条窗口在 Xvfb 下实测自 v0.1.17 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 / v0.1.4 / v0.1.5 / v0.1.6 / v0.1.7 / v0.1.8 / v0.1.9 / v0.1.10 / v0.1.11 / v0.1.12 / v0.1.13 / v0.1.14 / v0.1.15 / v0.1.16 资产保持原样
+- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；视频渲染与私有包 zip 媒体导入自 v0.1.5 起包含；私有内容包导出自 v0.1.6 起包含；WSL2 Docker 实验通道与全课程实验修正如 `ros:humble-xacro`、S2-04/S2-05/S1-07/S4-05 自 v0.1.7 起包含；阅读进度自动保存后保持滚动位置、S1 容器实验显式声明 host 网络、S1-06/S2-07 真实录制→回放→订阅链路自 v0.1.8 起包含；S1–S3 行为级实验检查与 WSL 显式发行版调用自 v0.1.9 起包含；课程验证状态校准与 S2-01/S2-08/S3-03 行为检查强化自 v0.1.10 起包含；S0-02/S3-01/S3-04/S3-06 检查改为行为断言、S4-07 验证状态校准自 v0.1.11 起包含；S0-04/S8-01/S8-02/S10-05 验证状态按实测校准自 v0.1.12 起包含；S8-02 对 systemd `degraded` 状态容忍（`is-system-running` 退出码语义）自 v0.1.13 起包含；S0-04 ufw 容器实测与 S4-02 WSL 无 vcan 模块提示自 v0.1.14 起包含；S4-02 vcan 在 QEMU 虚拟机实测通过自 v0.1.15 起包含；S3-04/S3-06 的 RViz 在 Xvfb + 软件渲染下实测自 v0.1.16 起包含；S3-06 的 `joint_state_publisher_gui` 滑条窗口在 Xvfb 下实测自 v0.1.17 起包含；S1-07 的 Noetic RViz TF 显示、`view_frames` 导出与断链报错在 Xvfb 下实测自 v0.1.18 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 / v0.1.4 / v0.1.5 / v0.1.6 / v0.1.7 / v0.1.8 / v0.1.9 / v0.1.10 / v0.1.11 / v0.1.12 / v0.1.13 / v0.1.14 / v0.1.15 / v0.1.16 / v0.1.17 资产保持原样
 - 依赖实车、真实传感器或硬件的实验命令，课程内均标注「⚠ 未实测」；ROS1/ROS2/Docker 命令已在官方容器与 WSL2 Docker 中逐条实测，合成数据的自动检查可离线复现
-- S3-04 / S3-06 的 RViz 已在容器内用 Xvfb + 软件渲染（`LIBGL_ALWAYS_SOFTWARE=1`，OpenGL 4.5）实测启动与 RobotModel 渲染；S3-06 的 `joint_state_publisher_gui` 滑条窗口也在 Xvfb 下实测启动、拖动滑条后 `/joint_states` 数值随之变化；物理显示器与 GPU 驱动仍未验证
+- S3-04 / S3-06 的 RViz 已在容器内用 Xvfb + 软件渲染（`LIBGL_ALWAYS_SOFTWARE=1`，OpenGL 4.5）实测启动与 RobotModel 渲染；S3-06 的 `joint_state_publisher_gui` 滑条窗口也在 Xvfb 下实测启动、拖动滑条后 `/joint_states` 数值随之变化；S1-07 的 Noetic RViz 同样在 Xvfb + llvmpipe 下实测打开 TF 显示（`Global Status: Ok`），并验证 `view_frames` 导出与断链报错；物理显示器与 GPU 驱动仍未验证
 - S4-02 的 vcan 实验需要宿主机内核提供 `vcan` 模块。本机 WSL2 内核未提供该模块（`modprobe vcan` 返回 `Module vcan not found`）；已在 QEMU 虚拟机的 Ubuntu 24.04 云镜像中实测通过（generic 内核 + `linux-modules-extra-$(uname -r)`，vcan0 创建/up、`cansend` 两帧被 `candump` 捕获、Python SocketCAN 收发均正常）。真实总线时序、负载与错误帧仍需实车或硬件回环验证
 - 课程来源映射分两层：`docs/coverage.csv` 记录每份内部资料的直接归属，`docs/lesson-sources.csv` 记录每节课 `meta.yaml` 声明的来源；`pnpm verify` 要求 76/76 节均有可解析来源，但部分课程只到章级/通用手册，未逐文件对应到具体文档
 - 知识库 `teach` 覆盖率为 98/267（36.7%），低于任务书 60% 目标；销售/参考/datasheet 等资料不具备可实验性，未通过改标签凑数。详见 `docs/10_M5验收报告.md`
