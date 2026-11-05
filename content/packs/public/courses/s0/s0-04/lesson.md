@@ -1,6 +1,6 @@
 # S0-04 · 网络：IP / 路由 / 端口 / SSH / 防火墙
 
-> 验证状态：✅ `ip` / `ping` / `ss` / `ssh -V` 已在 Ubuntu 24.04（WSL2）实测；✅ 2026-11-05 nftables 实测（临时 table/chain/rule 的创建、列出与删除，测试后已清理）；⚠ 本机未安装 ufw / firewalld，这两条命令未实测。文中地址均为文档保留段或回环地址。
+> 验证状态：✅ `ip` / `ping` / `ss` / `ssh -V` 已在 Ubuntu 24.04（WSL2）实测；✅ 2026-11-05 nftables 实测（临时 table/chain/rule 的创建、列出与删除，测试后已清理）；✅ 2026-11-06 在 `ros:humble-ros-base` 容器（独立 netns）实测 ufw `status / allow / enable / status verbose / delete / disable` 全流程（inactive → active → 规则可见 → 删除 → inactive）；⚠ firewalld 在该容器内可读 `--state` / `--list-all`，但 `--add-port` / `--reload` 因容器内 nftables 规则创建失败未通过，改动类命令仍未实测。本机 WSL 未安装 ufw / firewalld。文中地址均为文档保留段或回环地址。
 
 ## 1. 现场类比
 

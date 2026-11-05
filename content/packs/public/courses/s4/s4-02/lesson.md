@@ -1,6 +1,6 @@
 # S4-02 · SocketCAN 与 vcan 实战
 
-> 验证状态：✅ 2026-11-04 本机 Linux 实测 `socket.AF_CAN` / `CAN_RAW` 存在（SocketCAN 内核支持）；⚠ `can-utils` 与 vcan 接口创建需要 root 权限，**未实测**，命令来自 Linux 内核与 can-utils 官方文档。
+> 验证状态：✅ 2026-11-04 本机 Linux 实测 `socket.AF_CAN` / `CAN_RAW` 存在（SocketCAN 内核支持）；⚠ `can-utils` 与 vcan 接口创建需要 root 权限，且本机 WSL2 内核未提供 `vcan` 模块（`modprobe vcan` 报 `Module vcan not found`），vcan 接口与 `can-utils` 收发**未实测**；命令来自 Linux 内核与 can-utils 官方文档。
 
 ## 1. 现场类比
 
@@ -27,6 +27,8 @@ sudo ip link set up vcan0
 ```
 
 之后 `vcan0` 就像一个普通 CAN 接口：发出去的帧，同机所有打开 `vcan0` 的进程都能收到。
+
+> 提示：WSL2 的微软官方内核通常不带 `vcan` 模块（`modprobe vcan` 会报 `Module vcan not found`）。练习请用带 CAN 模块的常规 Linux 内核（宿主内核决定容器内是否可用），否则后述 `candump` / `cansend` 会直接失败，而不是伪造成功。
 
 ### 2.3 常用工具
 

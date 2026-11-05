@@ -1,7 +1,7 @@
 {
   "id": "rl.public.core",
   "name": "工业机器人全栈学习 · 公共课程包",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "visibility": "public",
   "min_app_version": "0.1.0",
   "license": "CC-BY-4.0 (文本) / MIT (代码示例)",
