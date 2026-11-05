@@ -1,6 +1,6 @@
 # S4-02 · SocketCAN 与 vcan 实战
 
-> 验证状态：✅ 2026-11-04 本机 Linux 实测 `socket.AF_CAN` / `CAN_RAW` 存在（SocketCAN 内核支持）；⚠ `can-utils` 与 vcan 接口创建需要 root 权限，且本机 WSL2 内核未提供 `vcan` 模块（`modprobe vcan` 报 `Module vcan not found`），vcan 接口与 `can-utils` 收发**未实测**；命令来自 Linux 内核与 can-utils 官方文档。
+> 验证状态：✅ 2026-11-04 本机 Linux 实测 `socket.AF_CAN` / `CAN_RAW` 存在（SocketCAN 内核支持）；✅ 2026-11-06 在 QEMU 虚拟机（Ubuntu 24.04 云镜像，内核 `6.8.0-147-generic`，加载 `vcan` 模块）实测 vcan0 创建并 up、`cansend` 两帧均被 `candump` 捕获、Python SocketCAN 发送 1 帧并收到 2 帧（自发回环与 `cansend` 帧）；⚠ 本机 WSL2 内核未提供 `vcan` 模块（`modprobe vcan` 报 `Module vcan not found`），练习需用带 CAN 模块的常规 Linux 内核或虚拟机；真实总线时序、负载与错误帧仍需实车或硬件回环验证。
 
 ## 1. 现场类比
 
@@ -28,7 +28,7 @@ sudo ip link set up vcan0
 
 之后 `vcan0` 就像一个普通 CAN 接口：发出去的帧，同机所有打开 `vcan0` 的进程都能收到。
 
-> 提示：WSL2 的微软官方内核通常不带 `vcan` 模块（`modprobe vcan` 会报 `Module vcan not found`）。练习请用带 CAN 模块的常规 Linux 内核（宿主内核决定容器内是否可用），否则后述 `candump` / `cansend` 会直接失败，而不是伪造成功。
+> 提示：WSL2 的微软官方内核通常不带 `vcan` 模块（`modprobe vcan` 会报 `Module vcan not found`），容器内也无法绕过（共享宿主内核）。练习请用带 CAN 模块的常规 Linux 内核；没有实机时，可用 QEMU 启动 Ubuntu 云镜像（generic 内核，安装 `linux-modules-extra-$(uname -r)` 后有 `vcan` 模块），在虚拟机里完成本节实验，否则后述 `candump` / `cansend` 会直接失败，而不是伪造成功。
 
 ### 2.3 常用工具
 
