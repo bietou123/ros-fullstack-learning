@@ -21,7 +21,8 @@
     "package:apk": "node scripts/package-apk.mjs",
     "smoke:desktop": "node scripts/smoke-desktop.mjs",
     "verify": "node scripts/verify.mjs",
-    "verify:release": "node scripts/verify-release.mjs"
+    "verify:release": "node scripts/verify-release.mjs",
+    "verify:experiments": "node scripts/verify-experiments.mjs"
   },
   "devDependencies": {
     "@electron/asar": "^3.4.1",

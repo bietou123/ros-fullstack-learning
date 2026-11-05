@@ -1,4 +1,4 @@
-.PHONY: install build dev typecheck test verify verify-full scan package-exe package-deb package-apk clean
+.PHONY: install build dev typecheck test verify verify-full verify-experiments scan package-exe package-deb package-apk clean
 
 install:
 	pnpm install
@@ -20,6 +20,9 @@ verify:
 
 verify-full:
 	node scripts/verify.mjs --full --strict
+
+verify-experiments:
+	node scripts/verify-experiments.mjs
 
 scan:
 	pnpm scan

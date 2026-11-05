@@ -55,6 +55,7 @@ pnpm dev            # 浏览器开发模式
 | `pnpm verify` | 内容包哈希、课程结构、覆盖率、敏感信息扫描；首次运行会自动生成内容包 |
 | `pnpm verify:release` | 从 `release/` 的 exe/deb/apk 中抽取内容包，比对哈希、课程结构与正文（exe 解包需 7-Zip，缺失时跳过） |
 | `pnpm verify --full` | 追加类型检查、单测和前端构建 |
+| `pnpm verify:experiments` | 按 App 相同的独立容器/宿主语义逐条复跑全部课程实验；`--only S1-01,S3-04` 可只跑指定课程，`--json <file>` 输出结构化结果。Windows 经 WSL 调用 Docker，可用 `RL_WSL_DISTRO` 指定发行版 |
 | `pnpm package:exe` | 构建 Windows NSIS 安装包 |
 | `pnpm package:deb` | 构建 Linux deb（需 Linux/WSL，含 x64/arm64） |
 | `pnpm package:apk` | 构建签名 Android APK（需 JDK 17 + Android SDK） |
