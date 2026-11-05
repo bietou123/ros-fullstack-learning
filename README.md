@@ -41,6 +41,8 @@ docker build -t ros:humble-xacro scripts/experiment-images/ros-humble-xacro
 
 要求：Node.js 20+（推荐 22/24）、pnpm 10.33（仓库已固定 `packageManager`）。
 
+Ubuntu 24.04 最小系统另需 `ca-certificates curl xz-utils git`（已在 `debootstrap --variant=minbase` 的裸系统 chroot 中从零验证：安装 + `pnpm verify --full --strict` 11/11）。只做校验/前端构建时可设 `ELECTRON_SKIP_BINARY_DOWNLOAD=1` 跳过 Electron 二进制下载；运行桌面端仍需要 Electron 与图形环境。
+
 ```bash
 corepack enable
 pnpm install
