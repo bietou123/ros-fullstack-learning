@@ -10,7 +10,7 @@ experiment:
   id: "s8-02-systemd"
   ros: "none"
   commands:
-    - "systemctl is-system-running"
+    - "systemctl is-system-running; echo EXIT=$?"
     - "systemctl list-units --type=service --state=running --no-pager | head"
     - "printf '[Unit]\\nDescription=rl test\\n[Service]\\nExecStart=/bin/true\\n[Install]\\nWantedBy=multi-user.target\\n' > /tmp/rl-test.service; systemd-analyze verify /tmp/rl-test.service; echo EXIT=$?"
   checks:

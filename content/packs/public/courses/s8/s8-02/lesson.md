@@ -1,6 +1,6 @@
 # S8-02 · systemd 服务化与开机自启
 
-> 验证状态：✅ 本机 WSL 内 systemd 正在运行，`systemctl is-system-running`、`list-units` 与 `systemd-analyze verify` 已实测；✅ 2026-11-05 以 root 完成 unit 生命周期实测：写入 `/etc/systemd/system/`、`daemon-reload`、`enable`（创建 symlink）、`start`（active）、`stop`、`disable`（删除 symlink）、删除并再次 `daemon-reload`，测试文件已清理。⚠ 未做「整机重启后自动拉起」的真实验收，也未用业务程序验证崩溃重启策略。
+> 验证状态：✅ 本机 WSL 内 systemd 正在运行，`systemctl is-system-running`、`list-units` 与 `systemd-analyze verify` 已实测；✅ 2026-11-05 以 root 完成 unit 生命周期实测：写入 `/etc/systemd/system/`、`daemon-reload`、`enable`（创建 symlink）、`start`（active）、`stop`、`disable`（删除 symlink）、删除并再次 `daemon-reload`，测试文件已清理；✅ 同日在 GitHub Actions runner（systemd `degraded`）实测 `is-system-running` 返回 1，据此把课程命令改为打印退出码。⚠ 未做「整机重启后自动拉起」的真实验收，也未用业务程序验证崩溃重启策略。
 
 ## 1. 现场类比
 
@@ -76,8 +76,8 @@ WantedBy=multi-user.target
 ## 3. 可复制命令 / 代码
 
 ```bash
-# 本机 systemd 状态
-systemctl is-system-running
+# 本机 systemd 状态（degraded 等非 running 状态会返回非零退出码，这里打印出来）
+systemctl is-system-running; echo EXIT=$?
 
 # 查看正在运行的服务
 systemctl list-units --type=service --state=running --no-pager | head
@@ -86,7 +86,7 @@ systemctl list-units --type=service --state=running --no-pager | head
 printf '[Unit]\nDescription=rl test\n[Service]\nExecStart=/bin/true\n[Install]\nWantedBy=multi-user.target\n' > /tmp/rl-test.service; systemd-analyze verify /tmp/rl-test.service; echo EXIT=$?
 ```
 
-预期：`running`；列出若干 running 服务；`EXIT=0`（unit 语法合法）。
+预期：`running`（或 `degraded`）；列出若干 running 服务；最后一行 `EXIT=0`（unit 语法合法）。`is-system-running` 输出 `degraded` 时其自身 `EXIT=1` 属于正常语义——有单元失败但系统仍可用，不应当作脚本失败；本机 WSL 为 `running`，GitHub Actions runner 上实测为 `degraded`。
 
 ## 4. 动手实验
 
