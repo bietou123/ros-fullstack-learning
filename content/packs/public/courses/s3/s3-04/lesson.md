@@ -1,6 +1,6 @@
 # S3-04 · RViz 与 robot_state_publisher
 
-> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`robot_state_publisher` 能加载 URDF 并启动为节点（`ros2 node list` 可见）。RViz 需图形界面，容器内未验证。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`robot_state_publisher` 能加载 URDF 并启动为节点（`ros2 node list` 可见）。✅ 2026-11-06 在容器内用 Xvfb + 软件渲染（`LIBGL_ALWAYS_SOFTWARE=1`，OpenGL 4.5）实测 `rviz2` 11.2.29 启动、加载 `/robot_description` 并显示 RobotModel，`Global Status: OK`；物理显示器与 GPU 驱动环境未验证。
 
 ## 1. 现场类比
 
@@ -87,6 +87,7 @@ source /opt/ros/humble/setup.bash && ros2 pkg list | grep -c joint_state_publish
 | 症状 | 原因 | 处理 |
 |---|---|---|
 | 模型显示不出来 | `robot_description` 未设置 | 检查参数名与内容 |
+| 模型不显示且 TF 树为空 | 全是 revolute 关节时，没有 `/joint_states` 就不会发布任何变换 | 先启动 `joint_state_publisher` 或自写节点发布 `/joint_states` |
 | 部分关节不动 | 关节名不匹配 | 对比 URDF 与 joint_states |
 | 整个模型乱飞 | Fixed Frame 错 | 改 Fixed Frame |
 | 有模型没 TF | robot_state_publisher 未运行 | 启动节点 |
