@@ -1,6 +1,6 @@
 # S3-06 · 挖机关节链 URDF 实战
 
-> 验证状态：✅ 2026-11-03 在本地构建的 `ros:humble-xacro` 镜像（`ros:humble-ros-base` + `ros-humble-xacro`）内实测 `check_urdf`、`xacro`、`robot_state_publisher` 均可用；✅ 2026-11-06 在带 `rviz2` 的 Humble 容器内用 Xvfb + 软件渲染（OpenGL 4.5）实测：`check_urdf` 通过、`joint_state_publisher` 提供 `/joint_states`、RViz 显示 boom/arm 连杆与 RobotModel，`Global Status: OK`；`joint_state_publisher_gui` 滑条窗口与物理显示器未验证。文中所有尺寸为教学示例值，非任何实车参数。
+> 验证状态：✅ 2026-11-03 在本地构建的 `ros:humble-xacro` 镜像（`ros:humble-ros-base` + `ros-humble-xacro`）内实测 `check_urdf`、`xacro`、`robot_state_publisher` 均可用；✅ 2026-11-06 在带 `rviz2` 的 Humble 容器内用 Xvfb + 软件渲染（OpenGL 4.5）实测：`check_urdf` 通过、`joint_state_publisher` 提供 `/joint_states`、RViz 显示 boom/arm 连杆与 RobotModel，`Global Status: OK`；同日另在 Xvfb 下实测 `joint_state_publisher_gui` 滑条窗口启动、四关节滑条可拖动，点击后 `/joint_states` 的 swing/boom 值随之变化。物理显示器与 GPU 驱动未验证。文中所有尺寸为教学示例值，非任何实车参数。
 
 ## 1. 现场类比
 

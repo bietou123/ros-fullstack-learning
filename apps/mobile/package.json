@@ -1,6 +1,6 @@
 {
   "name": "@rl/mobile",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "private": true,
   "description": "工业机器人全栈学习系统 · Android",
   "scripts": {
