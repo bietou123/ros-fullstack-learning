@@ -1,0 +1,40 @@
+name: verify-experiments
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 只跑指定课程（逗号分隔，如 S1-01,S3-04；留空跑全部）
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  experiments:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Run course experiments
+        run: |
+          ARGS="--json experiments.json"
+          if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only ${{ inputs.only }}"; fi
+          node scripts/verify-experiments.mjs $ARGS
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: experiments-result
+          path: experiments.json
+          if-no-files-found: ignore

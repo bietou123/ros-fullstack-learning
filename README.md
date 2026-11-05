@@ -66,6 +66,8 @@ pnpm dev            # 浏览器开发模式
 
 GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.11 -f ref=main`。
 
+课程实验回归默认只在本地/手动执行（需要 Docker 与课程镜像，耗时较长）：`gh workflow run verify-experiments.yml`，可选 `-f only=S1-01,S3-04` 只跑指定课程，结果以 `experiments.json` 工件上传。
+
 ## 构建三端
 
 ### Windows exe
