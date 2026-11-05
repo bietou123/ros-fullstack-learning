@@ -1,6 +1,6 @@
 # S8-02 · systemd 服务化与开机自启
 
-> 验证状态：✅ 本机 WSL 内 systemd 正在运行，`systemctl is-system-running`、`list-units` 与 `systemd-analyze verify` 已实测；⚠ 创建并启用真实业务服务需要 sudo，**本机未做**。
+> 验证状态：✅ 本机 WSL 内 systemd 正在运行，`systemctl is-system-running`、`list-units` 与 `systemd-analyze verify` 已实测；✅ 2026-11-05 以 root 完成 unit 生命周期实测：写入 `/etc/systemd/system/`、`daemon-reload`、`enable`（创建 symlink）、`start`（active）、`stop`、`disable`（删除 symlink）、删除并再次 `daemon-reload`，测试文件已清理。⚠ 未做「整机重启后自动拉起」的真实验收，也未用业务程序验证崩溃重启策略。
 
 ## 1. 现场类比
 

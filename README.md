@@ -31,6 +31,8 @@ docker pull ros:humble-ros-base
 docker build -t ros:humble-xacro scripts/experiment-images/ros-humble-xacro
 ```
 
+- S8-01 的 `docker compose` 示例需要 Compose 插件：`docker compose version` 可验证，Ubuntu 24.04 可 `sudo apt install docker-compose-v2`。
+
 - Windows 需要在 WSL2 发行版内安装 Docker 并将用户加入 `docker` 组，或在 Windows 上安装 Docker Desktop 并开启 WSL 集成。
 - Docker Hub 不可直连时可使用可用的镜像加速源拉取，再重新打回官方名称；具体加速地址随网络环境变化，不在仓库内固定。
 - 本地没有对应镜像时，实验会明确返回失败原因，不会伪造成功。
@@ -64,7 +66,7 @@ pnpm dev            # 浏览器开发模式
 
 产物统一写入 `release/`。打包脚本会依次执行内容构建、敏感信息扫描和严格校验，任一步失败即中止。
 
-GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.11 -f ref=main`。
+GitHub Actions 的 `verify-release` 工作流会在 Release 发布后自动下载已上传的 exe/deb/apk，复跑 `pnpm verify:release`；也可手动触发：`gh workflow run verify-release.yml -f tag=v0.1.12 -f ref=main`。
 
 课程实验回归默认只在本地/手动执行（需要 Docker 与课程镜像，耗时较长）：`gh workflow run verify-experiments.yml`，可选 `-f only=S1-01,S3-04` 只跑指定课程，结果以 `experiments.json` 工件上传。
 
@@ -133,7 +135,7 @@ docs              资料盘点、能力矩阵、课程地图、ADR、里程碑�
 ## 已知限制
 
 - arm64 deb 尚无对应硬件实机验证；Android APK 已签名并校验内容哈希，并在 Android 34 x86_64 无窗口模拟器上完成启动、离线学习、进度落盘与数据导出/导入验证，但**未做 Android 真机启动验证**
-- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；视频渲染与私有包 zip 媒体导入自 v0.1.5 起包含；私有内容包导出自 v0.1.6 起包含；WSL2 Docker 实验通道与全课程实验修正如 `ros:humble-xacro`、S2-04/S2-05/S1-07/S4-05 自 v0.1.7 起包含；阅读进度自动保存后保持滚动位置、S1 容器实验显式声明 host 网络、S1-06/S2-07 真实录制→回放→订阅链路自 v0.1.8 起包含；S1–S3 行为级实验检查与 WSL 显式发行版调用自 v0.1.9 起包含；课程验证状态校准与 S2-01/S2-08/S3-03 行为检查强化自 v0.1.10 起包含；S0-02/S3-01/S3-04/S3-06 检查改为行为断言、S4-07 验证状态校准自 v0.1.11 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 / v0.1.4 / v0.1.5 / v0.1.6 / v0.1.7 / v0.1.8 / v0.1.9 / v0.1.10 资产保持原样
+- Android 学习数据导出依赖系统分享面板（`@capacitor/filesystem` + `@capacitor/share`），v0.1.1 起包含该修复；私有内容包导入的存储键修复自 v0.1.2 起包含；错题本自 v0.1.3 起包含；阶段测验与构建 commit 展示自 v0.1.4 起包含；视频渲染与私有包 zip 媒体导入自 v0.1.5 起包含；私有内容包导出自 v0.1.6 起包含；WSL2 Docker 实验通道与全课程实验修正如 `ros:humble-xacro`、S2-04/S2-05/S1-07/S4-05 自 v0.1.7 起包含；阅读进度自动保存后保持滚动位置、S1 容器实验显式声明 host 网络、S1-06/S2-07 真实录制→回放→订阅链路自 v0.1.8 起包含；S1–S3 行为级实验检查与 WSL 显式发行版调用自 v0.1.9 起包含；课程验证状态校准与 S2-01/S2-08/S3-03 行为检查强化自 v0.1.10 起包含；S0-02/S3-01/S3-04/S3-06 检查改为行为断言、S4-07 验证状态校准自 v0.1.11 起包含；S0-04/S8-01/S8-02/S10-05 验证状态按实测校准自 v0.1.12 起包含；v0.1.0 / v0.1.1 / v0.1.2 / v0.1.3 / v0.1.4 / v0.1.5 / v0.1.6 / v0.1.7 / v0.1.8 / v0.1.9 / v0.1.10 / v0.1.11 资产保持原样
 - 依赖实车、真实传感器或硬件的实验命令，课程内均标注「⚠ 未实测」；ROS1/ROS2/Docker 命令已在官方容器与 WSL2 Docker 中逐条实测，合成数据的自动检查可离线复现
 - 课程来源映射分两层：`docs/coverage.csv` 记录每份内部资料的直接归属，`docs/lesson-sources.csv` 记录每节课 `meta.yaml` 声明的来源；`pnpm verify` 要求 76/76 节均有可解析来源，但部分课程只到章级/通用手册，未逐文件对应到具体文档
 - 知识库 `teach` 覆盖率为 98/267（36.7%），低于任务书 60% 目标；销售/参考/datasheet 等资料不具备可实验性，未通过改标签凑数。详见 `docs/10_M5验收报告.md`

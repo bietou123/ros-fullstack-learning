@@ -1,6 +1,6 @@
 # S8-01 · Docker Compose 编排
 
-> 验证状态：✅ 2026-11-04 本机 Linux 实测 compose 文件解析（PyYAML）。⚠ 本机 Docker 引擎 29.1.3 可用，但**未安装 compose 插件**（`docker compose` 不存在），`docker compose config/up` 与容器间通信**未实测**。
+> 验证状态：✅ 2026-11-05 本机 Linux 实测 Docker Compose 2.40.3：`docker compose config`、`up -d`、健康检查门控 `depends_on: condition: service_healthy`、自定义网络内按服务名访问（HTTP 200）、`down` 清理。⚠ 未在真实业务镜像与现场网络（多播/DDS）上验证。
 
 ## 1. 现场类比
 
@@ -65,10 +65,11 @@ DDS 发现依赖多播/单播配置：
 # 生成并解析一个最小 compose 文件，检查服务名与重启策略
 python3 -c "lines=['services:','  app:','    image: busybox','    restart: unless-stopped']; open('/tmp/c.yml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/c.yml')); print(sorted(d['services']),d['services']['app']['restart'])"
 
-# 安装了 compose 插件的机器上（本机未安装该插件）：
-# docker compose config      # 校验并展开配置
-# docker compose up -d       # 后台启动
-# docker compose ps          # 查看状态
+# 安装了 compose 插件的机器上（本机 Compose 2.40.3 已实测 config/up/ps/down）：
+docker compose -f /tmp/c.yml config    # 校验并展开配置
+docker compose -f /tmp/c.yml up -d     # 后台启动（需要本地已有或能拉取 busybox 镜像）
+docker compose -f /tmp/c.yml ps        # 查看状态
+docker compose -f /tmp/c.yml down      # 停止并清理
 ```
 
 预期：`['app'] unless-stopped`。没有 Docker 时，至少先做静态校验，别把 YAML 错误带上现场。
