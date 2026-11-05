@@ -26,6 +26,14 @@ jobs:
         run: pnpm install --frozen-lockfile
         env:
           ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      - name: Prepare experiment dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-yaml
+          for img in hello-world ros:noetic-ros-base ros:noetic-perception ros:humble-ros-base; do
+            docker pull "$img"
+          done
+          docker build -t ros:humble-xacro scripts/experiment-images/ros-humble-xacro
       - name: Run course experiments
         run: |
           ARGS="--json experiments.json"
