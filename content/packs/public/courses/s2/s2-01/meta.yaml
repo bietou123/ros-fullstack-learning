@@ -16,7 +16,7 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 14 ros2 topic pub -r 5 /rl_demo std_msgs/msg/String \"{data: hi}\" >/dev/null 2>&1 &) && sleep 4 && timeout 6 ros2 node list && timeout 6 ros2 topic list -t | head -n 10; true'"
   checks:
     - "bash -lc 'source /opt/ros/humble/setup.bash && echo $ROS_DISTRO | grep -q humble'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 topic list | grep -q rosout'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 topic pub -r 5 /rl_demo std_msgs/msg/String \"{data: hi}\" >/dev/null 2>&1 &) && sleep 4 && timeout 6 ros2 topic list | grep -q /rl_demo'"
   timeoutSec: 300
   headless: true
 quiz:

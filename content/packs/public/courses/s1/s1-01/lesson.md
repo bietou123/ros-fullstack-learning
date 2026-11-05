@@ -1,6 +1,6 @@
 # S1-01 · ROS1 世界观：master / node / topic
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。命令与包名取自 ROS Noetic 官方文档；实验通过 `ros:noetic-ros-base` 容器执行，请在执行后记录实际输出。
+> 验证状态：✅ 2026-11-04 在 `ros:noetic-ros-base` 容器内实测（`--network host`）：`rosversion -d`、`rospack find roscpp`、启动 `roscore` 后 `rosnode list` 出现 `/rosout`、`rostopic list` 均通过。
 
 ## 1. 现场类比
 

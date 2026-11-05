@@ -1,6 +1,6 @@
 # S2-06 · launch.py 与参数文件
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`ros2 launch` 执行 `ExecuteProcess` 产生文件副作用，`ros2 param get/dump` 读取运行中节点参数均通过。
 
 ## 1. 现场类比
 

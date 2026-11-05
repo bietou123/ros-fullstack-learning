@@ -1,6 +1,6 @@
 # S2-03 · rclpy 节点与 QoS
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器（`--network host`）。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`ros2 topic info -v` 显示 `BEST_EFFORT`，rclpy 创建节点 `rl_probe` 并读取名称通过。
 
 ## 1. 现场类比
 

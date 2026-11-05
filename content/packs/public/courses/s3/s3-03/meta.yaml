@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 1 --frame-id base_link --child-frame-id boom_base >/dev/null 2>&1 &) && sleep 2 && timeout 5 ros2 run tf2_ros tf2_echo base_link boom_base; true'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import tf2_ros; print(\\\"tf2_ros ok\\\")\"'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q tf2_ros'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && python3 -c \"import tf2_ros\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 1 --frame-id base_link --child-frame-id boom_base >/dev/null 2>&1 &) && sleep 3 && timeout 6 ros2 run tf2_ros tf2_echo base_link boom_base | grep -m 1 \"0.000, 0.000, 1.000\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && (timeout 12 ros2 run tf2_ros static_transform_publisher --x 0 --y 0 --z 1 --frame-id base_link --child-frame-id boom_base >/dev/null 2>&1 &) && sleep 3 && timeout 6 ros2 topic echo /tf_static --once | grep -q boom_base'"
   timeoutSec: 300
   headless: true
 quiz:

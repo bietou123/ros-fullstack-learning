@@ -1,6 +1,6 @@
 # S3-03 · TF2 广播器与监听器
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。实验在 `ros:humble-ros-base` 容器内执行（`--network host`）。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`static_transform_publisher` 发布后 `tf2_echo` 输出平移 `0.000, 0.000, 1.000`，`ros2 topic echo /tf_static --once` 收到 `boom_base`。
 
 ## 1. 现场类比
 

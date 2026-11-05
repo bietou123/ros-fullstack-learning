@@ -1,6 +1,6 @@
 # S0-06 · Docker：镜像、容器、挂载、网络
 
-> 验证状态：⚠ 本机（Windows + WSL2）未安装 Docker，本课命令**未在本机执行**。命令语法取自 Docker 官方文档；请在你的 Ubuntu 主机执行并在笔记里记录实际输出。没有 Docker 时，应用会显示「当前设备没有可用的 Linux 后端」，不会伪造结果。
+> 验证状态：✅ 2026-11-04 在 WSL2 Ubuntu 24.04 的 Docker 引擎实测：`docker --version`、`docker info`、`docker run --rm hello-world` 与 `docker image inspect hello-world` 均通过（需本机已有 `hello-world` 镜像）。没有 Docker 时，应用会显示「当前设备没有可用的 Linux 后端」，不会伪造结果。
 
 ## 1. 现场类比
 

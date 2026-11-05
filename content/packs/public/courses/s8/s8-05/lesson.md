@@ -1,6 +1,6 @@
 # S8-05 · rosbag 复盘诊断
 
-> 验证状态：✅ 本课本机实测了 rosbag2 元数据解析命令；⚠ 本机未安装 ROS2，`ros2 bag` / `rosbag play` 命令为标准用法但**未实测**。
+> 验证状态：✅ 2026-11-04 本机实测 rosbag2 元数据解析命令；`ros2 bag record → info → play → topic echo` 整条链路已在 `ros:humble-ros-base` 容器内实测（见 S2-07）。真实现场的长时间录制与磁盘/时间同步问题未实测。
 
 ## 1. 现场类比
 
@@ -54,7 +54,7 @@ bag 保存的是**话题消息 + 接收时间戳**，不是「现场全部真相
 # 解析 rosbag2 metadata.yaml：时长、总消息数、某话题频率
 python3 -c "lines=['rosbag2_bagfile_information:','  message_count: 1200','  duration:','    nanoseconds: 60000000000','  topics_with_message_count:','    - topic_metadata:','        name: /imu','      message_count: 1000']; open('/tmp/m.yaml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/m.yaml'))['rosbag2_bagfile_information']; dur=d['duration']['nanoseconds']/1e9; print('dur_s=%.0f count=%d rate=%.1f'%(dur,d['message_count'],d['topics_with_message_count'][0]['message_count']/dur))"
 
-# 有 ROS2 的机器上（本机未实测）：
+# 已实测（S2-07 容器内，20 Hz 发布 → record → info → play → echo）：
 # ros2 bag info <bag_dir>
 # ros2 bag play <bag_dir> --clock --rate 0.5
 ```

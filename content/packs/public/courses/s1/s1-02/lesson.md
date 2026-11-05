@@ -1,6 +1,6 @@
 # S1-02 · 工作空间与 catkin 包
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。请在 `ros:noetic-ros-base` 容器或 Noetic 主机执行并记录输出。
+> 验证状态：✅ 2026-11-04 在 `ros:noetic-ros-base` 容器内实测：`catkin_make` 建工作空间、`catkin_create_pkg` 生成 `package.xml` / `CMakeLists.txt`、`rospack find` 定位新包均通过。
 
 ## 1. 现场类比
 

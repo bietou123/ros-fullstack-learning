@@ -1,6 +1,6 @@
 # S1-03 · 编写第一个节点（rospy）
 
-> 验证状态：⚠ 本机未安装 ROS，本课代码与命令**未在本机执行**。请在 Noetic 环境实测后记录输出。
+> 验证状态：✅ 2026-11-04 在 `ros:noetic-ros-base` 容器内实测（`--network host`）：`import rospy`、`std_msgs/String` 类型加载、启动 `roscore` 后 `rostopic echo -n 2` 收到发布消息均通过。
 
 ## 1. 现场类比
 

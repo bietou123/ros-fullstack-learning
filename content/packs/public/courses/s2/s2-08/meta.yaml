@@ -15,8 +15,8 @@ experiment:
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -c ros1_bridge; true'"
     - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | head -n 5'"
   checks:
-    - "bash -lc 'source /opt/ros/humble/setup.bash && ros2 pkg list | grep -q rclpy'"
-    - "bash -lc 'source /opt/ros/humble/setup.bash && test -f /opt/ros/noetic/setup.bash; echo expected-missing-noetic'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && test -n \"$(ros2 pkg list)\"'"
+    - "bash -lc 'source /opt/ros/humble/setup.bash && ! ros2 pkg list | grep -qx ros1_bridge && ! test -f /opt/ros/noetic/setup.bash'"
   timeoutSec: 300
   headless: true
 quiz:

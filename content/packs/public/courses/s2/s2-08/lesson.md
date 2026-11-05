@@ -1,6 +1,6 @@
 # S2-08 · ROS1→ROS2 迁移与 bridge
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。`ros1_bridge` 需要 ROS1 Noetic 与 ROS2 Humble 共存环境，容器内无法直接验证，仅给出检查命令。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测：`ros2 pkg list` 非空，并确认该镜像默认不含 `ros1_bridge`、也没有 ROS1 Noetic 环境。真正的桥接需要 Noetic 与 Humble 共存，未验证。
 
 ## 1. 现场类比
 

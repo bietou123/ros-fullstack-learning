@@ -1,6 +1,6 @@
 # S3-04 · RViz 与 robot_state_publisher
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**；RViz 需图形界面，容器内仅验证工具链。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`robot_state_publisher` 能加载 URDF 并启动为节点（`ros2 node list` 可见）。RViz 需图形界面，容器内未验证。
 
 ## 1. 现场类比
 

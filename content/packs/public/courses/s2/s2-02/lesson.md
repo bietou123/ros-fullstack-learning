@@ -1,6 +1,6 @@
 # S2-02 · colcon 工作空间与包
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测：`ros2 pkg create` + `colcon build --packages-select` 生成 `install/` 与 ament 索引，`ros2 pkg prefix` 可定位新包。
 
 ## 1. 现场类比
 

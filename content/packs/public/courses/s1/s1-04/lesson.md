@@ -1,6 +1,6 @@
 # S1-04 · topic、消息与 rostopic 诊断
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。容器实验见第 5 节。
+> 验证状态：✅ 2026-11-04 在 `ros:noetic-ros-base` 容器内实测（`--network host`）：20 Hz 发布后 `rostopic hz --window=20` 输出 average rate，`rosmsg show std_msgs/String` 通过。
 
 ## 1. 现场类比
 

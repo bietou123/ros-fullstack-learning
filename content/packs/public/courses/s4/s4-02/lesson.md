@@ -1,6 +1,6 @@
 # S4-02 · SocketCAN 与 vcan 实战
 
-> 验证状态：⚠ 本机未安装 can-utils，且 vcan 需要内核模块与 root 权限，**未实测**。命令来自 Linux 内核与 can-utils 官方文档。
+> 验证状态：✅ 2026-11-04 本机 Linux 实测 `socket.AF_CAN` / `CAN_RAW` 存在（SocketCAN 内核支持）；⚠ `can-utils` 与 vcan 接口创建需要 root 权限，**未实测**，命令来自 Linux 内核与 can-utils 官方文档。
 
 ## 1. 现场类比
 

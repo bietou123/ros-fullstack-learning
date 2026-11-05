@@ -1,6 +1,6 @@
 # S3-01 · URDF 基础：link 与 joint
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。URDF 校验使用 `ros:humble-ros-base` 容器（含 urdfdom 工具）。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测：`check_urdf` 成功解析示例 URDF 并列出 `arm_link`，`ros2 pkg list` 含 urdf 相关包。
 
 ## 1. 现场类比
 

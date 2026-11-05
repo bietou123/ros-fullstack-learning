@@ -1,6 +1,6 @@
 # S10-05 · 部署与故障演练
 
-> 验证状态：✅ 本机 Linux 实测了重启风暴（crashloop）判定逻辑；⚠ 本机未安装 Docker，Compose 示例为静态说明，`docker compose up` **未实测**。
+> 验证状态：✅ 2026-11-04 本机 Linux 实测重启风暴（crashloop）判定逻辑；⚠ 本机 Docker 引擎可用但未安装 compose 插件，Compose 示例为静态说明，`docker compose up` **未实测**。
 
 ## 1. 现场类比
 

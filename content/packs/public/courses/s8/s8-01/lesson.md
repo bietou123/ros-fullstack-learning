@@ -1,6 +1,6 @@
 # S8-01 · Docker Compose 编排
 
-> 验证状态：✅ 本课 compose 文件解析命令已在本机 Linux 实测（PyYAML）；⚠ 本机未安装 Docker，`docker compose up` 与容器间通信**未实测**。
+> 验证状态：✅ 2026-11-04 本机 Linux 实测 compose 文件解析（PyYAML）。⚠ 本机 Docker 引擎 29.1.3 可用，但**未安装 compose 插件**（`docker compose` 不存在），`docker compose config/up` 与容器间通信**未实测**。
 
 ## 1. 现场类比
 
@@ -65,7 +65,7 @@ DDS 发现依赖多播/单播配置：
 # 生成并解析一个最小 compose 文件，检查服务名与重启策略
 python3 -c "lines=['services:','  app:','    image: busybox','    restart: unless-stopped']; open('/tmp/c.yml','w').write(chr(10).join(lines)); import yaml; d=yaml.safe_load(open('/tmp/c.yml')); print(sorted(d['services']),d['services']['app']['restart'])"
 
-# 有 Docker 的机器上（本机未实测）：
+# 安装了 compose 插件的机器上（本机未安装该插件）：
 # docker compose config      # 校验并展开配置
 # docker compose up -d       # 后台启动
 # docker compose ps          # 查看状态

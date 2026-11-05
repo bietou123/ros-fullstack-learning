@@ -1,6 +1,6 @@
 # S1-05 · service、param、launch
 
-> 验证状态：⚠ 本机未安装 ROS，本课命令**未在本机执行**。容器实验见第 5 节。
+> 验证状态：✅ 2026-11-04 在 `ros:noetic-ros-base` 容器内实测（`--network host`）：`rosparam set/get/list` 往返、`rosservice list` 出现 `get_loggers` 均通过。
 
 ## 1. 现场类比
 

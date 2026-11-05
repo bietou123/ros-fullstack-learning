@@ -1,6 +1,6 @@
 # S2-01 · ROS2 架构：DDS 与节点发现
 
-> 验证状态：⚠ 本机未安装 ROS2，本课命令**未在本机执行**。实验使用 `ros:humble-ros-base` 容器（`--network host`，DDS 发现需要真实网卡/组播）。
+> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测（`--network host`）：`ros2 topic pub` 发布后 `ros2 node list` 与 `ros2 topic list` 均能看到节点/话题，`ROS_DISTRO=humble`。跨机 DDS 发现受实际网络组播影响，未验证。
 
 ## 1. 现场类比
 
