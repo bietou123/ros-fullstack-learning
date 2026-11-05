@@ -13,7 +13,7 @@ experiment:
     - "rm -rf /tmp/rl-s02 && mkdir -p /tmp/rl-s02/logs && cd /tmp/rl-s02 && printf 'boot ok\\nimu timeout\\ncan error\\n' > logs/app.log && grep -n 'error' logs/app.log"
     - "cd /tmp/rl-s02 && ls -la && du -sh logs && tail -n 2 logs/app.log"
   checks:
-    - "test -f /tmp/rl-s02/logs/app.log"
+    - "rm -rf /tmp/rl-s02c && mkdir -p /tmp/rl-s02c/logs && printf 'boot ok\\nimu timeout\\ncan error\\n' > /tmp/rl-s02c/logs/app.log && grep -n 'error' /tmp/rl-s02c/logs/app.log | grep -q '3:can error'"
     - "grep -q 'can error' /tmp/rl-s02/logs/app.log"
   timeoutSec: 60
   headless: true
