@@ -1,6 +1,6 @@
 # S1-07 · TF 入门与 RViz
 
-> 验证状态：✅ 2026-11-03 在 `ros:noetic-perception` 容器（WSL Ubuntu 24.04，headless）实测 `static_transform_publisher` 发布、`tf_echo` 查询与包检查均通过；RViz 图形界面未验证。
+> 验证状态：✅ 2026-11-03 在 `ros:noetic-perception` 容器（WSL Ubuntu 24.04，headless）实测 `static_transform_publisher` 发布、`tf_echo` 查询与包检查均通过；✅ 2026-11-06 在自建 `ros:noetic-rviz` 镜像（`ros:noetic-perception` + `ros-noetic-rviz`）内实测三节静态 TF 链：`tf_echo base_link bucket_link` 得到复合平移 `(0, 0, 6)`，`view_frames` 生成 `frames.pdf`，查询不存在的 `boom_typo` 返回 `does not exist` 并列出当前帧；同日用 Xvfb + 软件渲染（llvmpipe，OpenGL 4.5）实测 RViz 打开 TF 显示、`Global Status: Ok`、三节坐标轴可见。物理显示器与 GPU 驱动未验证。
 
 ## 1. 现场类比
 
@@ -82,7 +82,7 @@ source /opt/ros/noetic/setup.bash && rospack find tf
 source /opt/ros/noetic/setup.bash && rospack find tf2_ros
 ```
 
-注意该镜像不含 RViz；需要图形化请在本机安装 `ros-noetic-rviz` 或使用自行构建的 desktop 镜像。
+注意该镜像不含 RViz；需要图形化请在本机安装 `ros-noetic-rviz` 或使用自行构建的 desktop 镜像。2026-11-06 已用 `ros:noetic-perception` + `ros-noetic-rviz` 自建镜像在 Xvfb 软件渲染下验证 RViz 的 TF 显示，物理显示器与 GPU 驱动仍未验证。
 
 ## 6. 常见故障
 
