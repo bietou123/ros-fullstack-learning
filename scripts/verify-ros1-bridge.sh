@@ -34,10 +34,10 @@ done
 docker exec -d "$NAME" bash -lc "source $ROS1_SETUP && source $ROS2_SETUP && ros2 run ros1_bridge dynamic_bridge --bridge-all-topics >/tmp/bridge.log 2>&1"
 sleep 4
 
-# ROS 1 -> ROS 2
+# ROS 1 -> ROS 2 (Foxy's `ros2 topic echo` has no --once; sample for 8 s)
 docker exec -d "$NAME" bash -lc "source $ROS1_SETUP && rostopic pub -r 2 /chatter std_msgs/String 'data: from_ros1' >/tmp/pub1.log 2>&1"
 sleep 4
-ROS2_FROM_ROS1="$(docker exec "$NAME" bash -lc "source $ROS2_SETUP && timeout 15 ros2 topic echo /chatter std_msgs/String --once" 2>&1 || true)"
+ROS2_FROM_ROS1="$(docker exec "$NAME" bash -lc "source $ROS2_SETUP && timeout 8 ros2 topic echo /chatter std_msgs/String" 2>&1 || true)"
 echo "ROS2_FROM_ROS1:"; echo "$ROS2_FROM_ROS1"
 
 # ROS 2 -> ROS 1
