@@ -1,6 +1,6 @@
 # S7-02 · 定位与地图维护
 
-> 验证状态：✅ 本课粒子权重与置信度判据命令已在本机 Linux 实测；⚠ 未运行真实 AMCL/定位节点，收敛判据为**教学示例**。
+> 验证状态：✅ 本课粒子权重与置信度判据命令已在本机 Linux 实测；✅ 2026-11-06 在 `ros:humble` + `nav2_amcl` 容器内用合成激光/里程计与 8×6 m 房间地图完成 AMCL 全程跟踪实测（24 s、360 线、0.5% 里程尺度误差；位置误差 0.004–0.024 m，航向误差 ≤0.8°，协方差 3e-3–1e-2 m²）；⚠ 真实激光雷达与实车定位仍未实测。
 
 ## 1. 现场类比
 
@@ -79,6 +79,13 @@ python3 -c "import math; w=[0.1,0.2,0.4,0.2,0.1]; s=sum(w); wn=[x/s for x in w];
 ```
 
 预期输出 `LOCALIZATION_OK`。
+
+**可复现的 AMCL 跟踪实测**：在 `ros:humble` 基础上装 `ros-humble-nav2-map-server`、`ros-humble-nav2-amcl`、`ros-humble-nav2-lifecycle-manager`，用 168×128 @0.05 m 的 8×6 m 房间栅格图（原点 `[-4.2, -3.2, 0.0]`，四墙精确落在 x=±4.0、y=±3.0），`map_server` 与 `amcl` 分别 `ros2 lifecycle set ... configure/activate`。AMCL 关键参数：`scan_topic:=/scan`、`global_frame_id:=map`、`odom_frame_id:=odom`、`base_frame_id:=base_link`、`laser_model_type:=likelihood_field`、`set_initial_pose:=true`、`initial_pose.*` 从已知起点给；跟踪记录时把 `update_min_d`/`update_min_a` 调到 `0.05`（默认 0.25 m / 0.2 rad 会让 `/amcl_pose` 明显滞后）。仿真节点发 360 线 `/scan`、`odom→base_link`（含 0.5% 尺度与航向漂移）和 `base_link→laser` 静态外参，24 s 内机器人绕 2 m 半径一圈；按 `msg.header.stamp` 把 `/amcl_pose` 与解析真值对齐后，实测位置误差 0.004–0.024 m、航向误差 ≤0.8°、协方差 3e-3–1e-2 m²。
+
+三个实测踩坑（都会让定位「看起来能用但一直偏」）：
+- 地图几何必须与仿真/现场一致：直接拿带裁切误差的 SLAM 输出当基准，墙面纵向偏移约 0.1 m，会把位置误差稳定抬高到 0.16–0.19 m；换成墙面对齐的图后误差立即回到厘米级。
+- 激光外参要与数据来源一致：TF 声明 `base_link→laser` 有 0.1 m 前移、但扫描是从 `base_link` 原点生成的，AMCL 按外参补偿后会产生随航向变化的固定偏差（实测约 0.07–0.09 m）。
+- 真值对齐要用消息时间戳：拿「打印时刻」的解析真值去比 `amcl_pose`，机器人一直在动，会把正常的 1–2 帧延迟误判成定位误差。
 
 ## 6. 常见故障
 
