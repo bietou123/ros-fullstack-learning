@@ -34,11 +34,22 @@ done
 docker exec -d "$NAME" bash -lc "source $ROS1_SETUP && source $ROS2_SETUP && ros2 run ros1_bridge dynamic_bridge --bridge-all-topics >/tmp/bridge.log 2>&1"
 sleep 4
 
-# ROS 1 -> ROS 2 (Foxy's `ros2 topic echo` has no --once; sample for 8 s)
+# ROS 1 -> ROS 2. Start the ROS 2 subscriber BEFORE the ROS 1 publisher so a
+# discovery race cannot decide the result (Foxy's `ros2 topic echo` has no
+# --once, so run it under timeout and poll the captured output).
+docker exec -d "$NAME" bash -lc "source $ROS2_SETUP && PYTHONUNBUFFERED=1 timeout 30 ros2 topic echo /chatter std_msgs/msg/String >/tmp/echo1.log 2>&1"
+sleep 3
 docker exec -d "$NAME" bash -lc "source $ROS1_SETUP && rostopic pub -r 2 /chatter std_msgs/String 'data: from_ros1' >/tmp/pub1.log 2>&1"
-sleep 4
-ROS2_FROM_ROS1="$(docker exec "$NAME" bash -lc "source $ROS2_SETUP && timeout 8 ros2 topic echo /chatter std_msgs/String" 2>&1 || true)"
-echo "ROS2_FROM_ROS1:"; echo "$ROS2_FROM_ROS1"
+for i in $(seq 1 20); do
+  if docker exec "$NAME" bash -lc 'grep -q from_ros1 /tmp/echo1.log 2>/dev/null'; then
+    echo "ROS2_GOT_ROS1_MSG iter=$i"
+    break
+  fi
+  sleep 1
+done
+echo "ROS2 topic list:"; docker exec "$NAME" bash -lc "source $ROS2_SETUP && timeout 10 ros2 topic list -t" 2>&1 || true
+echo "ROS2_FROM_ROS1:"; docker exec "$NAME" bash -lc 'cat /tmp/echo1.log' 2>&1 || true
+echo "PUB1_LOG:"; docker exec "$NAME" bash -lc 'cat /tmp/pub1.log' 2>&1 || true
 
 # ROS 2 -> ROS 1
 docker exec -d "$NAME" bash -lc "source $ROS2_SETUP && ros2 topic pub -r 2 /chatter2 std_msgs/String '{data: from_ros2}' >/tmp/pub2.log 2>&1"
@@ -49,6 +60,6 @@ echo "ROS1_FROM_ROS2:"; echo "$ROS1_FROM_ROS2"
 echo "BRIDGE_LOG:"; docker exec "$NAME" bash -lc 'tail -n 15 /tmp/bridge.log' || true
 
 fail=0
-echo "$ROS2_FROM_ROS1" | grep -q "from_ros1" || { echo "FAIL: ROS1->ROS2 message not received"; fail=1; }
+docker exec "$NAME" bash -lc 'grep -q from_ros1 /tmp/echo1.log' || { echo "FAIL: ROS1->ROS2 message not received"; fail=1; }
 echo "$ROS1_FROM_ROS2" | grep -q "from_ros2" || { echo "FAIL: ROS2->ROS1 message not received"; fail=1; }
 [ "$fail" -eq 0 ] && echo "ROS1_BRIDGE_OK" || exit 1
