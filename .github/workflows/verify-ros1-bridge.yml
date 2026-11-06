@@ -1,0 +1,23 @@
+name: verify-ros1-bridge
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Container image with ROS 1 and ROS 2
+        required: false
+        default: ros:foxy-ros1-bridge
+
+permissions:
+  contents: read
+
+jobs:
+  bridge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run bidirectional ros1_bridge smoke
+        env:
+          ROS1_BRIDGE_IMAGE: ${{ inputs.image }}
+        run: bash scripts/verify-ros1-bridge.sh
