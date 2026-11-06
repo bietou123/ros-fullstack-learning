@@ -1,6 +1,6 @@
 # S7-03 · Nav2 架构
 
-> 验证状态：✅ 本课行为树状态聚合命令已在本机 Linux 实测；⚠ 未启动完整 Nav2 栈，节点与话题名以 Humble 版本文档为准。
+> 验证状态：✅ 本课行为树状态聚合命令已在本机 Linux 实测；✅ 2026-11-06 在 `ros:humble-nav2` 容器内启动完整 Nav2 栈，9 个生命周期节点全部 `active`、12 个动作服务器可用，`map→base_link` TF 正常，并完成一次成功导航与一次地图外目标的失败/恢复实测；⚠ 真实底盘、真实传感器与现场参数仍未实测。
 
 ## 1. 现场类比
 
@@ -66,6 +66,21 @@ python3 -c "seq=lambda x:'SUCCESS' if all(v=='SUCCESS' for v in x) else 'FAILURE
 ```
 
 预期：`seq=FAILURE fall=SUCCESS`。这解释了为什么控制器失败后，恢复行为仍可能让整条导航继续。
+
+**可复现的 Nav2 全栈实测**：在 `ros:humble` 上装 `ros-humble-nav2-bringup`（本机为 1.1.20，已含 map_server/amcl/nav2 全套），配一个发布 `/scan`、`/odom`、`map→odom→base_link` TF 并订阅 `/cmd_vel` 的合成差速底盘中转节点，用 8×6 m 房间栅格图启动：
+
+```bash
+ros2 launch nav2_bringup bringup_launch.py use_sim_time:=false \
+  map:=/map/rl_map.yaml params_file:=/out/nav2_params.yaml \
+  autostart:=true use_composition:=False
+```
+
+从 `nav2_bringup` 默认参数派生时，必须把 `amcl.base_frame_id` 改成与实际 TF 一致的 `base_link`（默认是 `base_footprint`），否则 AMCL 只报 `Couldn't transform from laser to base_footprint`，`map→odom` 永远不会发布，规划器和控制器会一直等 TF。启动后实测：9 个生命周期节点（`map_server`、`amcl`、`bt_navigator`、`planner_server`、`controller_server`、`behavior_server`、`smoother_server`、`waypoint_follower`、`velocity_smoother`）全部 `active [3]`；动作服务器 12 个，含 `navigate_to_pose`、`compute_path_to_pose`、`follow_path`、`spin`、`backup`、`wait`、`smooth_path`；`map→base_link` 读数 `(1.200, 0.000)`、yaw 90°。发目标 `(1.0, -1.0)`：8.71 s 后 `Goal finished with status: SUCCEEDED`，`number_of_recoveries: 0`，剩余距离 0.221 m（默认 `xy_goal_tolerance` 0.25 m）。再发一个地图外目标 `(6.0, 0.0)`：规划器立即报 `worldToMap failed: mx,my: 204,64, size_x,size_y: 168,128` 与 `The goal sent to the planner is off the global costmap`，行为树请求清除全局/局部代价地图，并因动作确认超时以 `Goal failed` / `ABORTED` 结束（`number_of_recoveries: 5`），底盘原地未动。
+
+三个实测踩坑：
+- 命令行轮询 `ros2 lifecycle get` 可能长时间不返回。把等待循环里的查询包在 `timeout 5` 内，否则整套 Nav2 已经激活，脚本却卡死在下一次查询上。
+- `bt_navigator` 的 `default_server_timeout` 默认只有 20 ms。CPU 被占满的容器里，清除局部代价地图、spin/wait/backup 的动作确认会超时（日志为 `Timed out while waiting for action server to acknowledge goal request`），恢复行为还没跑完导航就以 ABORTED 结束；资源紧张的设备上要适当放大。
+- 目标在地图外时属于「规划阶段必失败」，不要把它当成行为树恢复失败的证据；恢复行为只在路径可算、执行阶段出错时才真正展开。
 
 ## 4. 动手实验
 
