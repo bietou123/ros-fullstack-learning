@@ -1,0 +1,507 @@
+<?xml version="1.0"?>
+<!--
+  20 t 级履带式液压挖掘机运动学模型（rviz 教学/演示用）。
+
+  统一视觉参考：小松 PC210LC-11（20 t 级，与柳工 922 同级），只用来看比例和
+  轮廓特征 —— 尾部俯视圆弧、动臂肩部折转、驾驶室前倾风挡。
+  外形尺寸来自公开整机参数 + 参考照片上的"脚销→臂头"弦归一化量测
+  （履带长 4.45 m、履带板宽 0.60 m、轨距 2.20 m、驾驶室顶约 2.96 m、
+  尾部回转半径约 2.75 m、动臂 5.70 m、斗杆 2.95 m、铲斗宽 1.24 m 五齿）。
+  **这些是归一化估计值，不是 OEM 实测；也不是柳工 922 的测绘复刻**，
+  别拿它做干涉校核。几何参数表见 excavator_sim/design.py。
+
+  坐标约定：base_link 在地面中心，x 朝前，y 朝左，z 朝上。
+
+  关节约定（正方向）：
+    swing_joint   绕 z，俯视逆时针
+    boom_joint    绕 y，动臂下压
+    arm_joint     绕 y，斗杆向机器侧收
+    bucket_joint  绕 y，卸料张开（负 = 收斗）
+
+  几何全部是 urdf/meshes/ 下的 OBJ，由 tools/gen_meshes.py 程序化生成
+  （轮廓挤出 + 回转体，没有一处是方盒子拼的），整机约 2.3 k 顶点 / 4 k 三角面。
+
+  两条结构约束，改模型时必须守住：
+  1) rviz 的 RobotModel 对每个 link 只取**第一个** visual 的材质，
+     所以一个 link 只能有一种颜色，多色部件靠 fixed joint 拆成独立 link。
+  2) 三组油缸都是"缸筒 revolute 铰在上一级 + 活塞杆 prismatic 滑出"的两段式，
+     anim_node.py 每帧按铰点几何算出 pivot 角和伸缩量一起发布。
+     **铰点/缸筒长/杆长/限位全部由 excavator_sim/design.py 的 CYLINDERS 导出**
+     （`python -m excavator_sim.cylinders` 会打印可直接抄进来的 limit），
+     tools/validate_kinematics.py 校验 URDF 与它一致。
+-->
+<robot name="excavator_20t">
+
+  <material name="machine_yellow">
+    <color rgba="0.93 0.72 0.10 1.0"/>
+  </material>
+  <material name="machine_yellow_dark">
+    <color rgba="0.72 0.53 0.05 1.0"/>
+  </material>
+  <material name="track_dark">
+    <color rgba="0.12 0.12 0.13 1.0"/>
+  </material>
+  <material name="track_shoe">
+    <color rgba="0.30 0.30 0.32 1.0"/>
+  </material>
+  <material name="steel_mid">
+    <color rgba="0.42 0.43 0.46 1.0"/>
+  </material>
+  <material name="steel_light">
+    <color rgba="0.74 0.76 0.78 1.0"/>
+  </material>
+  <!-- 深蓝灰玻璃。上一版是 (0.07 0.13 0.20)，比背景还暗，正交渲染下就是
+       一块纯黑平面 —— 3/4 视看驾驶室像开了个洞。真机玻璃是带蓝绿的深色，
+       会反天空，既暗于车身又不至于全黑。 -->
+  <material name="cab_glass">
+    <color rgba="0.16 0.24 0.30 1.0"/>
+  </material>
+  <!-- 斗壳压暗到 0.27：参考照片里斗背是磨损的近黑钢，不是中灰。
+       上一版 0.32 与侧板用的 track_shoe(0.30) 几乎同值 —— 正交渲染没有
+       环境光遮蔽，两片同色相邻面直接糊成一整块，D 形侧板完全读不出来。 -->
+  <material name="bucket_steel">
+    <color rgba="0.27 0.27 0.30 1.0"/>
+  </material>
+  <!-- 斗齿：磨损高锰钢，比斗壳更黑。上一版复用 steel_light(0.74)，侧视里
+       渲染成一根白色尖刺，像悬空的小刀；参考照片里齿是近黑的。 -->
+  <material name="bucket_teeth_dark">
+    <color rgba="0.22 0.22 0.24 1.0"/>
+  </material>
+  <!-- 斗侧板：同样磨损钢，比斗壳(0.27)只亮一档。真机侧板和斗壳是同色磨
+       损钢，靠焊接棱边和环境光遮蔽分开；正交平光下没有遮蔽，只能靠明度差
+       把 D 形侧板从斗壳上剥出来。试过 steel_mid(0.42)：太亮，3/4 视里侧板
+       读成一片铝板"鸟嘴"，比斗壳还抢眼。0.34 是能分开又不跳的档位。 -->
+  <material name="bucket_side_steel">
+    <color rgba="0.34 0.34 0.37 1.0"/>
+  </material>
+
+  <!-- ==================== 底盘 / 履带 ==================== -->
+
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/base_frame.obj"/>
+      </geometry>
+      <material name="steel_mid"/>
+    </visual>
+  </link>
+
+  <!-- 左履带 -->
+  <joint name="track_left_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="track_left_link"/>
+    <origin xyz="0 1.10 0" rpy="0 0 0"/>
+  </joint>
+  <link name="track_left_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/track_belt.obj"/>
+      </geometry>
+      <material name="track_dark"/>
+    </visual>
+  </link>
+
+  <joint name="track_left_shoe_joint" type="fixed">
+    <parent link="track_left_link"/>
+    <child link="track_left_shoe_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="track_left_shoe_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/track_shoe.obj"/>
+      </geometry>
+      <material name="track_shoe"/>
+    </visual>
+  </link>
+
+  <joint name="track_left_wheel_joint" type="fixed">
+    <parent link="track_left_link"/>
+    <child link="track_left_wheel_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="track_left_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/track_wheel.obj"/>
+      </geometry>
+      <material name="steel_mid"/>
+    </visual>
+  </link>
+
+  <!-- 右履带 -->
+  <joint name="track_right_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="track_right_link"/>
+    <origin xyz="0 -1.10 0" rpy="0 0 0"/>
+  </joint>
+  <link name="track_right_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/track_belt.obj"/>
+      </geometry>
+      <material name="track_dark"/>
+    </visual>
+  </link>
+
+  <joint name="track_right_shoe_joint" type="fixed">
+    <parent link="track_right_link"/>
+    <child link="track_right_shoe_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="track_right_shoe_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/track_shoe.obj"/>
+      </geometry>
+      <material name="track_shoe"/>
+    </visual>
+  </link>
+
+  <joint name="track_right_wheel_joint" type="fixed">
+    <parent link="track_right_link"/>
+    <child link="track_right_wheel_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="track_right_wheel_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/track_wheel.obj"/>
+      </geometry>
+      <material name="steel_mid"/>
+    </visual>
+  </link>
+
+  <!-- ==================== 上车（回转体） ==================== -->
+
+  <joint name="swing_joint" type="revolute">
+    <parent link="base_link"/>
+    <child link="house_link"/>
+    <origin xyz="0 0 0.98" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-3.1416" upper="3.1416" effort="1000" velocity="1.2"/>
+  </joint>
+
+  <!-- 上车平台（含动臂铰点耳座、工作灯座） -->
+  <link name="house_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/house_deck.obj"/>
+      </geometry>
+      <material name="machine_yellow"/>
+    </visual>
+  </link>
+
+  <joint name="house_engine_joint" type="fixed">
+    <parent link="house_link"/>
+    <child link="house_engine_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="house_engine_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/house_engine.obj"/>
+      </geometry>
+      <material name="machine_yellow_dark"/>
+    </visual>
+  </link>
+
+  <joint name="counterweight_joint" type="fixed">
+    <parent link="house_link"/>
+    <child link="counterweight_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="counterweight_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/counterweight.obj"/>
+      </geometry>
+      <material name="machine_yellow"/>
+    </visual>
+  </link>
+
+  <joint name="cab_frame_joint" type="fixed">
+    <parent link="house_link"/>
+    <child link="cab_frame_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="cab_frame_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/cab_frame.obj"/>
+      </geometry>
+      <material name="machine_yellow"/>
+    </visual>
+  </link>
+
+  <joint name="cab_glass_joint" type="fixed">
+    <parent link="house_link"/>
+    <child link="cab_glass_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="cab_glass_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/cab_glass.obj"/>
+      </geometry>
+      <material name="cab_glass"/>
+    </visual>
+  </link>
+
+  <joint name="cab_trim_joint" type="fixed">
+    <parent link="house_link"/>
+    <child link="cab_trim_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="cab_trim_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/cab_trim.obj"/>
+      </geometry>
+      <material name="track_dark"/>
+    </visual>
+  </link>
+
+  <joint name="handrail_joint" type="fixed">
+    <parent link="house_link"/>
+    <child link="handrail_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="handrail_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/handrail.obj"/>
+      </geometry>
+      <material name="steel_light"/>
+    </visual>
+  </link>
+
+  <!-- ==================== 动臂 ==================== -->
+
+  <joint name="boom_joint" type="revolute">
+    <parent link="house_link"/>
+    <child link="boom_link"/>
+    <origin xyz="1.15 0 1.02" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.15" upper="0.36" effort="2000" velocity="0.7"/>
+  </joint>
+
+  <link name="boom_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/boom.obj"/>
+      </geometry>
+      <material name="machine_yellow"/>
+    </visual>
+  </link>
+
+  <joint name="boom_pipe_joint" type="fixed">
+    <parent link="boom_link"/>
+    <child link="boom_pipe_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="boom_pipe_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/boom_pipe.obj"/>
+      </geometry>
+      <material name="steel_light"/>
+    </visual>
+  </link>
+
+  <!-- 动臂油缸：缸筒铰在上车鼻锥 A=(1.40, 0.10)，活塞杆沿缸筒 +x 滑出。
+       slide origin = 缸筒长 1.52；barrel+rod = 2.805 = Lmax ⇒ 位移 = L − Lmax。
+       limit / velocity 由 cylinders.py 在全关节行程上密采样导出，别手改。 -->
+  <joint name="boom_cyl_pivot_joint" type="revolute">
+    <parent link="house_link"/>
+    <child link="boom_cyl_link"/>
+    <origin xyz="1.40 0 0.10" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.2786" upper="0.0730" effort="0" velocity="0.84"/>
+  </joint>
+  <link name="boom_cyl_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/boom_cyl_barrel.obj"/>
+      </geometry>
+      <material name="steel_mid"/>
+    </visual>
+  </link>
+
+  <joint name="boom_cyl_slide_joint" type="prismatic">
+    <parent link="boom_cyl_link"/>
+    <child link="boom_cyl_rod_link"/>
+    <origin xyz="1.52 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.2699" upper="0.0200" effort="0" velocity="0.67"/>
+  </joint>
+  <link name="boom_cyl_rod_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/boom_cyl_rod.obj"/>
+      </geometry>
+      <material name="steel_light"/>
+    </visual>
+  </link>
+
+  <!-- ==================== 斗杆 ==================== -->
+
+  <joint name="arm_joint" type="revolute">
+    <parent link="boom_link"/>
+    <child link="arm_link"/>
+    <origin xyz="5.70 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.35" upper="2.60" effort="1500" velocity="1.2"/>
+  </joint>
+
+  <link name="arm_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/arm.obj"/>
+      </geometry>
+      <material name="machine_yellow"/>
+    </visual>
+  </link>
+
+  <!-- 斗杆油缸：缸筒铰在动臂上缘立耳板 A=(3.45, 0.60)，缸筒长 2.10，
+       barrel+rod = 3.53 = Lmax。 -->
+  <joint name="arm_cyl_pivot_joint" type="revolute">
+    <parent link="boom_link"/>
+    <child link="arm_cyl_link"/>
+    <origin xyz="3.45 0 0.60" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.0869" upper="0.8108" effort="0" velocity="0.41"/>
+  </joint>
+  <link name="arm_cyl_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/arm_cyl_barrel.obj"/>
+      </geometry>
+      <material name="steel_mid"/>
+    </visual>
+  </link>
+
+  <joint name="arm_cyl_slide_joint" type="prismatic">
+    <parent link="arm_cyl_link"/>
+    <child link="arm_cyl_rod_link"/>
+    <origin xyz="2.10 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.3589" upper="0.0200" effort="0" velocity="1.42"/>
+  </joint>
+  <link name="arm_cyl_rod_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/arm_cyl_rod.obj"/>
+      </geometry>
+      <material name="steel_light"/>
+    </visual>
+  </link>
+
+  <!-- ==================== 铲斗 ==================== -->
+
+  <joint name="bucket_joint" type="revolute">
+    <parent link="arm_link"/>
+    <child link="bucket_link"/>
+    <origin xyz="2.95 0 0" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.10" upper="1.20" effort="1200" velocity="1.8"/>
+  </joint>
+
+  <link name="bucket_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/bucket.obj"/>
+      </geometry>
+      <material name="bucket_steel"/>
+    </visual>
+  </link>
+
+  <joint name="bucket_side_joint" type="fixed">
+    <parent link="bucket_link"/>
+    <child link="bucket_side_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="bucket_side_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/bucket_side.obj"/>
+      </geometry>
+      <material name="bucket_side_steel"/>
+    </visual>
+  </link>
+
+  <joint name="bucket_teeth_joint" type="fixed">
+    <parent link="bucket_link"/>
+    <child link="bucket_teeth_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+  <link name="bucket_teeth_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/bucket_teeth.obj"/>
+      </geometry>
+      <material name="bucket_teeth_dark"/>
+    </visual>
+  </link>
+
+  <!-- 铲斗油缸：缸筒铰在斗杆上表面耳板 A=(1.55, 0.58)，缸筒长 1.10，
+       barrel+rod = 2.169 = Lmax。 -->
+  <joint name="bucket_cyl_pivot_joint" type="revolute">
+    <parent link="arm_link"/>
+    <child link="bucket_cyl_link"/>
+    <origin xyz="1.55 0 0.58" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-0.0727" upper="0.3932" effort="0" velocity="0.55"/>
+  </joint>
+  <link name="bucket_cyl_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/bucket_cyl_barrel.obj"/>
+      </geometry>
+      <material name="steel_mid"/>
+    </visual>
+  </link>
+
+  <joint name="bucket_cyl_slide_joint" type="prismatic">
+    <parent link="bucket_cyl_link"/>
+    <child link="bucket_cyl_rod_link"/>
+    <origin xyz="1.10 0 0" rpy="0 0 0"/>
+    <axis xyz="1 0 0"/>
+    <limit lower="-1.0549" upper="0.0200" effort="0" velocity="1.18"/>
+  </joint>
+  <link name="bucket_cyl_rod_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/bucket_cyl_rod.obj"/>
+      </geometry>
+      <material name="steel_light"/>
+    </visual>
+  </link>
+
+</robot>

@@ -1,0 +1,9 @@
+# 预览/评审输出不进仓库。
+# build/review/ 里会放参考照片（仅本地参考，不得进公开仓库或 release bundle），
+# build/preview/ 是每次改造型都会重生成的渲染图。
+build/
+
+# 构建/运行副产物
+__pycache__/
+*.py[cod]
+*.egg-info/
