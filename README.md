@@ -146,6 +146,12 @@ docs              资料盘点、能力矩阵、课程地图、ADR、里程碑�
 - 媒体渲染支持 Markdown 图片与 mp4/webm 等视频链接；私有包 zip 可携带 `media/` 文件（存本机 IndexedDB，删除包时清理），公共内容包当前不含视频素材；GIF 按图片渲染；媒体不入学习数据 JSON 导出
 - Windows 安装包未做代码签名，首次运行可能出现 SmartScreen 提示
 
+## 技术支持
+
+课程里的命令、实验环境、现场部署卡住了，可以做远程排查：Nav2 / SLAM 调参、MoveIt2 配置、CAN 设备接入、URDF/TF 排查、国产板卡 arm64 移植。按小时计费，先聊 10 分钟判断能不能做，做不了直说。
+
+<https://bietou123.github.io/ros-support/>
+
 ## 许可
 
 代码与示例采用 MIT；课程文本采用 CC BY 4.0。详见 [LICENSE](LICENSE)。
