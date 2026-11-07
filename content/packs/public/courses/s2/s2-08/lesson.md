@@ -1,6 +1,6 @@
 # S2-08 · ROS1→ROS2 迁移与 bridge
 
-> 验证状态：✅ 2026-11-04 在 `ros:humble-ros-base` 容器内实测：`ros2 pkg list` 非空，并确认该镜像默认不含 `ros1_bridge`、也没有 ROS1 Noetic 环境。真正的桥接需要 Noetic 与 Humble 共存，未验证。
+> 验证状态：✅ 2026-11-06 在 GitHub Actions 的官方镜像 `ros:foxy-ros1-bridge`（内含 Noetic + Foxy）中实测**双向桥接**：ROS1 `rostopic pub /chatter` → ROS2 `ros2 topic echo` 收到 `data: from_ros1`；ROS2 `ros2 topic pub /chatter2` → ROS1 `rostopic echo` 收到 `data: "from_ros2"`；`dynamic_bridge --bridge-all-topics` 日志同时记录两个方向的 `Passing message from …`，脚本最终输出 `ROS1_BRIDGE_OK`（run `42179975578`）。✅ 2026-11-04 另确认 `ros:humble-ros-base` 默认不含 `ros1_bridge`、也没有 Noetic 环境。⚠ Humble + Noetic（Ubuntu 22.04）共存需源码编译，**未实测**；服务桥与自定义消息对也**未实测**。
 
 ## 1. 现场类比
 
@@ -57,14 +57,25 @@ ls /opt/ros/noetic/setup.bash /opt/ros/humble/setup.bash
 # ROS2 侧确认桥包是否安装
 ros2 pkg list | grep ros1_bridge
 
-# 安装（Ubuntu 22.04）
-sudo apt install ros-humble-ros1-bridge
+# ⚠ Humble 没有现成的 ros1_bridge 二进制包（它必须与 Noetic 在同一机器上编译），
+#    `sudo apt install ros-humble-ros1-bridge` 不成立；教材实测走的是官方镜像
+#    ros:foxy-ros1-bridge（Noetic + Foxy 已预装并编好桥）。
 
-# 静态桥：只桥指定消息对
+# 动态桥：自动桥接所有话题（仅调试用）
 ros2 run ros1_bridge dynamic_bridge --bridge-all-topics
 ```
 
-> ⚠ 上句是**动态桥**示例，仅用于调试；上线请用静态桥配置。
+> 2026-11-06 在 `ros:foxy-ros1-bridge` 容器内实测（CI workflow `verify-ros1-bridge`，run `42179975578`）：
+>
+> 1. 容器内启动 `roscore`，再启动 `dynamic_bridge --bridge-all-topics`；
+> 2. **先**在 ROS2 侧起 `ros2 topic echo /chatter std_msgs/msg/String`，**再**在 ROS1 侧 `rostopic pub -r 2 /chatter std_msgs/String 'data: from_ros1'`；
+> 3. ROS2 侧收到 3 条 `data: from_ros1`，`ros2 topic list -t` 中出现 `/chatter [std_msgs/msg/String]`；
+> 4. 反向起 `ros2 topic pub -r 2 /chatter2` 后，ROS1 `rostopic echo -n1 /chatter2` 收到 `data: "from_ros2"`；
+> 5. 桥日志同时出现 `Passing message from ROS 1 std_msgs/String to ROS 2 std_msgs/msg/String` 与 `Passing message from ROS 2 std_msgs/msg/String to ROS 1 std_msgs/String`。
+>
+> **顺序很重要**：ROS2 订阅端必须先起来。第一次 CI 运行中订阅端晚于发布端启动，桥日志已经记录消息通过，但 `ros2 topic echo` 一条都没接住，误报「未收到」。Foxy 的 `ros2 topic echo` 也没有 `--once`，只能用 `timeout` + 轮询输出文件。
+>
+> 一键复跑：`bash scripts/verify-ros1-bridge.sh`，或手动触发 GitHub Actions 的 `verify-ros1-bridge` workflow（需能拉 `ros:foxy-ros1-bridge` 镜像）。
 
 ## 4. 动手实验
 
@@ -94,6 +105,7 @@ source /opt/ros/humble/setup.bash && ros2 pkg list | head -n 5
 | 症状 | 原因 | 处理 |
 |---|---|---|
 | 桥启动了但话题不通 | 两边环境变量互相污染 | 分开 shell，显式 source |
+| 桥日志显示已通过，接收端却没收到 | 订阅端起得比发布端晚，错过了发现窗口 | 先起订阅再起发布，或延长等待时间 |
 | 消息桥不过去 | `.msg` 定义不一致 | 对齐字段名与类型 |
 | 延迟突然增大 | 动态桥按需加载 | 改静态桥 |
 | 时间戳乱 | 两边时钟/`use_sim_time` 不一致 | 统一时钟源 |

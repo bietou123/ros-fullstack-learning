@@ -1,6 +1,6 @@
 # S4-01 · CAN 物理层与帧结构
 
-> 验证状态：概念课，命令为通用 Linux/SocketCAN 工具命令，**本机未连接真实 CAN 设备，未实测**。
+> 验证状态：✅ 2026-11-06 在 QEMU Ubuntu 24.04（内核 6.8）的 `vcan0` 上实测：`ip -details link show vcan0` 输出 `<NOARP,UP,LOWER_UP> mtu 72`，`candump -L` 带微秒时间戳捕获两帧，`canbusload vcan0@500000` 能持续运行（vcan 无位时序与真实负载，结果恒为 0%）；⚠ 物理层电压/终端电阻、`state`/`berr-counter` 与真实总线负载仍需真实 CAN 控制器，**未实测**。
 
 ## 1. 现场类比
 
@@ -58,6 +58,8 @@ candump can0
 
 `ip -details link show can0` 能看到 `state` 与 `berr-counter`。
 
+> ⚠ `vcan0` 是纯软件接口，没有位时序和错误计数；上述命令在 vcan 上只显示 `NOARP,UP,LOWER_UP` 和 `mtu 72`，不会出现 `state`/`berr-counter`。这些字段需要真实 CAN 控制器。
+
 ## 3. 可复制命令 / 代码
 
 ```bash
@@ -66,6 +68,8 @@ candump can0
 candump -L can0 > /tmp/can.log     # 带时间戳保存
 canbusload can0@500000             # 总线负载（需 can-utils）
 ```
+
+> `canbusload` 依赖真实位时序；在 `vcan0` 上会持续输出 `0%`，只能验证命令可用，不能代表真实总线负载。
 
 ## 4. 动手实验
 
