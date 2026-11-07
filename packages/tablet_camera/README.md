@@ -24,6 +24,7 @@ sudo apt install gstreamer1.0-libcamera gir1.2-gst-plugins-base-1.0 python3-gi
 ## 构建
 
 ```bash
+# 放进你的 ROS 2 工作空间 src/ 下
 cd ~/ros_ws
 colcon build --packages-select tablet_camera
 source install/setup.bash
@@ -83,10 +84,12 @@ D  = [0,0,0,0,0]
 
 ## 已知问题
 
-- **帧率不匀**：实测约 20 fps，帧间隔在 27–73 ms 之间跳（`std dev ≈ 0.015 s`）。
-  来源是 libcamera simple pipeline + 软件 ISP 的排队抖动，不是节点丢帧。
-  rviz 里表现为「一闪一闪」。缓解办法是把 rviz 的 Frame Rate 调到 10，
-  并降低发布分辨率。
+- **帧率不匀**：libcamera simple pipeline + 软件 ISP 的排队抖动，帧间隔会在
+  30–68 ms 之间跳（`std dev ≈ 0.007 s`），不是节点丢帧。缩放放到 GStreamer
+  端之后抖动明显收敛；剩下的是传感器侧固有的。**画面「一闪一闪」的典型原因
+  是连发帧**：下游变慢时旧帧排在可靠队列里成串发出，同一个显示帧被刷两次。
+  本节点默认 `image_best_effort:=true`（best effort + depth 1）就是为了
+  避免这件事；rviz 的 Frame Rate 也建议压到 10。
 - **管线会静默停帧**：libcamera 在长时间运行后可能不再产帧。旧版脚本的
   裸 `while True: pull-sample()` 会因此空转吃满一个核。本节点用
   `watchdog_timeout` 重建管线，并把轮询放进 rclpy timer。
