@@ -1038,6 +1038,15 @@ def gen_arm() -> Mesh:
     # 臂头（铲斗销座）
     m.cylinder((D.ARM_LEN - 0.04, -0.19, 0.0), (D.ARM_LEN - 0.04, 0.19, 0.0),
                0.16, seg=16)
+    # H-link 铰点耳板：斗杆头部两侧各一块，**夹在斗宽内侧**。
+    # 上一版把 H 销架到 |y| 0.62…0.73（斗宽之外），3/4 视角看就是一个横跨
+    # 整机的方框挂在工作装置末端 —— 真机连杆全部收在斗耳板中间，宽度约
+    # 0.3 m。这里 H-link 板占 0.13…0.245，H 销跨 ±0.26 包住。
+    hx, hz = D.H_LINK_PIN
+    for sy in (-1, 1):
+        y0, y1 = sorted((sy * 0.13, sy * 0.245))
+        m.box(hx - 0.13, hx + 0.13, y0, y1, hz - 0.16, hz + 0.07)
+    m.cylinder((hx, -0.26, hz), (hx, 0.26, hz), 0.055, seg=12)
     return m
 
 
@@ -1047,6 +1056,7 @@ BUCKET_CX, BUCKET_CZ = D.BUCKET_CX, D.BUCKET_CZ
 BUCKET_R_OUT, BUCKET_R_IN = D.BUCKET_R_OUT, D.BUCKET_R_IN
 BUCKET_A0, BUCKET_A1 = D.BUCKET_A0, D.BUCKET_A1
 BUCKET_LUG = D.BUCKET_LUG
+BUCKET_HALF_W = D.BUCKET_HALF_W
 BUCKET_TEETH_Y = D.BUCKET_TEETH_Y
 
 BUCKET_TOP_PLATE_LEN = 0.30      # 顶板从斗背顶端朝销轴方向伸出的长度
@@ -1057,7 +1067,7 @@ def _bk_pt(r, a):
     return (BUCKET_CX + r * math.cos(a), BUCKET_CZ + r * math.sin(a))
 
 
-def bucket_top_plate():
+def bucket_top_plate(length=BUCKET_TOP_PLATE_LEN):
     """斗背顶板（销轴侧那块平板）的 2D 截面，沿 y 挤出。
 
     铲斗的口**不是整个敞开**的：销轴这一侧有一块顶板把两个侧板和斗壳焊在
@@ -1065,16 +1075,21 @@ def bucket_top_plate():
     看进 C 形壳的内弧 —— 渲染出来就是一根开了口的深色圆管，这是上一版被
     判"铲斗像圆柱"的主因之一。
 
-    截面从斗背顶端（外弧 + 内弧两个端点）朝销轴方向收 0.30 m：
-    外点 (-0.306,0.249) → (-0.073,0.059)，内点 (-0.204,0.185) → (0.029,-0.005)。
+    截面从斗背顶端（外弧 + 内弧两个端点）朝销轴方向收 `length`：
+    长 0.30 时外点 (-0.306,0.249) → (-0.073,0.059)，
+    内点 (-0.204,0.185) → (0.029,-0.005)。
     板厚 = 内外弧半径差 0.12 m，方向指销轴，所以大面正好朝上（受光）。
     口开度因此留在 0.86 m，不至于挖不进去。
+
+    `length` 是参数而不是常量，因为中央那一段要给 H-link 让位：H→P2 这条
+    边从斗销上方扫到斗背外侧，斜着穿过顶板远端。中央段收到 0.12 m 之后
+    整块板都落在 H-link 上方（见 gen_bucket）。
     """
     p_out = _bk_pt(BUCKET_R_OUT, BUCKET_A0)
     p_in = _bk_pt(BUCKET_R_IN, BUCKET_A0)
     rx, rz = -p_out[0], -p_out[1]                  # 从外点指向销轴（原点）
     r = math.hypot(rx, rz)
-    dx, dz = BUCKET_TOP_PLATE_LEN * rx / r, BUCKET_TOP_PLATE_LEN * rz / r
+    dx, dz = length * rx / r, length * rz / r
     return [p_out, p_in,
             (p_in[0] + dx, p_in[1] + dz),
             (p_out[0] + dx, p_out[1] + dz)]
@@ -1088,19 +1103,73 @@ def gen_bucket() -> Mesh:
     斗深约 0.9 m），放大就成管子了。
     """
     m = Mesh("bucket")
-    outer = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 18)
-    inner = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_IN, BUCKET_A1, BUCKET_A0, 18)
-    m.extrude(outer + inner, -0.62, 0.62)
-    # 顶板：把销轴这一侧封住，斗腔只在顶板前缘到切削刃之间敞开
-    m.extrude(bucket_top_plate(), -0.62, 0.62)
+    # 斗壳分三段挤出：两侧全宽环 + 中央一段。
+    #
+    # 中央段必须**上端开缺口**（148°→176°）并且顶板缩短（0.30→0.12）：
+    # H-link 三角板的 H→P2 边从斗销正上方 (0.03, 0.26) 斜着扫到斗背后外侧
+    # (-0.43, 0.02)，穿过斗背外壳 148°~172° 那一段和顶板远端。真机的斗背
+    # 在这个位置本来就是开口的 —— 两块耳板立起来，板间没有壳。连杆全部
+    # 收在 |y| < 0.28 里，所以只挖中央这一段，两侧斗宽照旧。
+    LINK_GAP_HALF_W = 0.28
+    LINK_GAP_ANG = math.radians(28)          # 148° → 176°
+    outer = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 24)
+    inner = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_IN, BUCKET_A1, BUCKET_A0, 24)
+    for sy in (-1, 1):
+        y0, y1 = sorted((sy * LINK_GAP_HALF_W, sy * BUCKET_HALF_W))
+        m.extrude(outer + inner, y0, y1)
+        m.extrude(bucket_top_plate(), y0, y1)
+    # 斗背横向加强筋。0.62 m 半径的弧面在正交平光下只剩法线渐变，
+    # 没有筋板时 3/4 视角读成一根深色圆筒 —— 真机斗背外弧上本来就焊着
+    # 几道横向筋板，这里补上，同时给斗背撑出结构感。筋板截面是弯的薄板，
+    # 外凸 6 cm、内埋 1.5 cm，跨 ±0.58（不碰 ±0.63 起的侧板）。
+    for adeg in (124.0, 100.0, 76.0, 52.0):
+        a = math.radians(adeg)
+        da = math.radians(6.0)
+        band = (arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT + 0.060,
+                        a - da, a + da, 4)
+                + arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT - 0.015,
+                          a + da, a - da, 4))
+        m.extrude(band, -0.58, 0.58)
+    # 切削刃板：斗壳在 -38° 收口，那一刀在真机上不是露出 0.12 m 厚的壳口，
+    # 而是一条横贯整个斗宽的厚刃板。没有它，侧视里斗壳末端直接是一圈切面，
+    # 和圆管端面没区别 —— 这是"铲斗像滚筒"的第二个来源。刃板沿切向朝斗口
+    # 伸出 0.11 m、径向再薄 0.16 m 收成楔形，和斗齿座焊在一起。
+    a1 = BUCKET_A1
+    ux, uz = math.cos(a1), math.sin(a1)          # 径向（外壳法线）
+    tx, tz = -math.sin(a1), math.cos(a1)         # 切向（朝斗壳本体）
+    rim = _bk_pt(BUCKET_R_OUT, a1)
+
+    def _blade(r_off, t_off):
+        """r_off 沿径向往里、t_off 沿切向（+ 朝斗壳、− 朝斗口）。"""
+        return (rim[0] - r_off * ux + t_off * tx,
+                rim[1] - r_off * uz + t_off * tz)
+
+    m.extrude([_blade(0.00, 0.02), _blade(0.00, -0.11),
+               _blade(0.14, -0.11), _blade(0.14, 0.02)],
+              -0.62, 0.62)
+    # 中央段比两侧各宽 4 mm，避免两个端盖共面 z-fighting（重叠段全在实体内部）
+    a0c = BUCKET_A0 + LINK_GAP_ANG
+    outer_c = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, a0c, BUCKET_A1, 14)
+    inner_c = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_IN, BUCKET_A1, a0c, 14)
+    m.extrude(outer_c + inner_c, -LINK_GAP_HALF_W - 0.004,
+              LINK_GAP_HALF_W + 0.004)
+    m.extrude(bucket_top_plate(0.12), -LINK_GAP_HALF_W - 0.004,
+              LINK_GAP_HALF_W + 0.004)
     # 销座：把斗背和铲斗销实心地连起来，否则侧视里斗背像是浮在臂头前面
     m.cylinder((0.0, -0.62, 0.0), (0.0, 0.62, 0.0), 0.20, seg=16)
-    # 铲斗油缸耳板：从斗背顶面立起来，杆头销在 BUCKET_LUG
+    # dogbone 耳板：两块钢板立在斗背中央缺口的下沿（176°），从那里立到
+    # BUCKET_LUG。上一版把耳板挂在 |y| 0.62…0.73（斗宽之外），和 H-link、
+    # dogbone 一起做成一个横跨整机的外挂方框 —— 真机耳板间距约 0.2 m，
+    # 收在斗宽里，dogbone 夹在它们外侧。
     lx, lz = BUCKET_LUG
+    base = _bk_pt(BUCKET_R_OUT, a0c)      # 缺口下沿，(-0.398, -0.037)
+    prof = [(lx - 0.09, lz + 0.06), (lx + 0.09, lz + 0.06),
+            (base[0] + 0.09, base[1] - 0.01),
+            (base[0] - 0.09, base[1] - 0.01)]
     for sy in (-1, 1):
-        y0, y1 = sorted((sy * 0.09, sy * 0.21))
-        m.box(lx - 0.15, lx + 0.15, y0, y1, 0.42, lz + 0.09)
-    m.cylinder((lx, -0.21, lz), (lx, 0.21, lz), 0.045, seg=10)
+        y0, y1 = sorted((sy * 0.03, sy * 0.245))
+        m.extrude(prof, y0, y1)
+    m.cylinder((lx, -0.26, lz), (lx, 0.26, lz), 0.050, seg=12)
     return m
 
 
@@ -1114,9 +1183,18 @@ def gen_bucket_side() -> Mesh:
     m = Mesh("bucket_side")
     outer = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 18)
     prof = outer + [bucket_top_plate()[3]]        # 最后一点 = 顶板前缘外点
+    # 外缘倒角：最外面 2 cm 收进 4.5%，侧视里就多出一圈硬边线。
+    # 整块侧板在正交平光下是同一片纯色平面，不收边时读成一个圆盘；
+    # 真机侧板外沿也是倒过角的（焊完打磨），不是一刀切齐的直棱。
+    pcx = sum(p[0] for p in prof) / len(prof)
+    pcz = sum(p[1] for p in prof) / len(prof)
+    prof_o = [(pcx + (p[0] - pcx) * 0.955, pcz + (p[1] - pcz) * 0.955)
+              for p in prof]
     for sy in (-1, 1):
-        y0, y1 = sorted((sy * 0.63, sy * 0.70))
+        y0, y1 = sorted((sy * 0.63, sy * 0.685))
         m.extrude(prof, y0, y1)
+        y0, y1 = sorted((sy * 0.685, sy * 0.705))
+        m.extrude(prof_o, y0, y1)
     # 刃口加强条：沿切削刃横过来一条厚板，比斗壳外弧再凸 3.5 cm
     #
     # 截面必须是个**有面积的矩形**。上一版四个角点是
@@ -1134,6 +1212,75 @@ def gen_bucket_side() -> Mesh:
             for r, s in ((r_lo, -half), (r_hi, -half),
                          (r_hi, half), (r_lo, half))]
     m.extrude(quad, -0.64, 0.64)
+    return m
+
+
+def _round_poly(pts, radii, seg=5):
+    """多边形逐顶点圆角（二次贝塞尔近似），保持顶点顺序。
+
+    pts 是 (x, z) 列表、闭合；radii 每顶点一个半径。返回值仍是闭合点列，
+    但点变多了 —— extrude 的三角化能直接吃。半径必须小于两邻边长度，
+    否则相邻圆角相互重叠、轮廓自交。
+    """
+    out = []
+    n = len(pts)
+    for i in range(n):
+        p = pts[i]
+        a, b = pts[i - 1], pts[(i + 1) % n]
+        va = (a[0] - p[0], a[1] - p[1])
+        vb = (b[0] - p[0], b[1] - p[1])
+        la, lb = math.hypot(*va), math.hypot(*vb)
+        r = radii[i]
+        t1 = (p[0] + va[0] / la * r, p[1] + va[1] / la * r)
+        t2 = (p[0] + vb[0] / lb * r, p[1] + vb[1] / lb * r)
+        for k in range(seg + 1):
+            t = k / seg
+            u = 1.0 - t
+            out.append((u * u * t1[0] + 2 * u * t * p[0] + t * t * t2[0],
+                        u * u * t1[1] + 2 * u * t * p[1] + t * t * t2[1]))
+    return out
+
+
+def gen_h_link() -> Mesh:
+    """H-link 三角板（双侧两片 + 三根横销）。局部原点 = H，+x 指向 P2。
+
+    板上三个销的相对位置是刚性三角形的三条边：
+        H  (0, 0)
+        P2 (H_LINK_R2, 0)
+        P1 (H_LINK_R1·cos GAM, H_LINK_R1·sin GAM) = (0, −0.46)
+
+    中面 |y| 0.13…0.245，夹在斗耳板外侧、斗宽内侧。上一版放在 |y| 0.62…
+    0.73（斗宽之外），3/4 视角就是一个横跨整机的方框；真机连杆全收在
+    斗耳板之间，整束宽度约 0.3 m。H 销跨 ±0.26 把两块板穿起来。
+    """
+    m = Mesh("h_link")
+    tri = [(0.0, 0.0),
+           (D.H_LINK_R2, 0.0),
+           (D.H_LINK_R1 * math.cos(D.H_LINK_GAM),
+            D.H_LINK_R1 * math.sin(D.H_LINK_GAM))]
+    prof = _round_poly(tri, (0.17, 0.115, 0.115), seg=6)
+    for sy in (-1, 1):
+        y0, y1 = sorted((sy * 0.13, sy * 0.245))
+        m.extrude(prof, y0, y1)
+    for px, pz in tri:
+        m.cylinder((px, -0.26, pz), (px, 0.26, pz), 0.055, seg=12)
+    return m
+
+
+def gen_dogbone() -> Mesh:
+    """dogbone 双片扁杆（两端圆头 + 销）。局部原点 = BUCKET_LUG，+x 指向 P2。
+
+    中面 |y| 0.02…0.115，比 H-link 更靠内一层 —— 两者在同一组销上但不同
+    平面，不会互相磨。P2 端套在 H-link 自己那根跨 ±0.26 的销上，所以这里
+    只做 BUCKET_LUG 端的销（穿耳板和斗壳缺口）。
+    """
+    m = Mesh("dogbone")
+    L = D.DOGBONE_LEN
+    prof = rounded_rect(0.0, L, -0.075, 0.075, 0.075)
+    for sy in (-1, 1):
+        y0, y1 = sorted((sy * 0.02, sy * 0.115))
+        m.extrude(prof, y0, y1)
+    m.cylinder((0.0, -0.19, 0.0), (0.0, 0.19, 0.0), 0.055, seg=12)
     return m
 
 
@@ -1272,6 +1419,8 @@ def main() -> int:
         ("boom.obj", "machine_yellow", gen_boom()),
         ("boom_pipe.obj", "steel_light", gen_boom_pipe()),
         ("arm.obj", "machine_yellow", gen_arm()),
+        ("h_link.obj", "machine_yellow_dark", gen_h_link()),
+        ("dogbone.obj", "machine_yellow_dark", gen_dogbone()),
         ("bucket.obj", "bucket_steel", gen_bucket()),
         ("bucket_side.obj", "track_shoe", gen_bucket_side()),
         ("bucket_teeth.obj", "steel_light", gen_bucket_teeth()),

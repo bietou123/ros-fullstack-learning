@@ -17,9 +17,13 @@
     boom_joint    绕 y，动臂下压
     arm_joint     绕 y，斗杆向机器侧收
     bucket_joint  绕 y，卸料张开（负 = 收斗）
+    h_link_joint  绕 y，H-link 三角板（被动，挂在 arm_link 上）
+    dogbone_joint 绕 y，dogbone 连杆（被动，挂在 bucket_link 上）
+  后两个是铲斗四连杆的被动关节，角度由 excavator_sim.cylinders.solve()
+  按 bucket_joint 闭式反解，每帧随 /joint_states 发布。
 
   几何全部是 urdf/meshes/ 下的 OBJ，由 tools/gen_meshes.py 程序化生成
-  （轮廓挤出 + 回转体，没有一处是方盒子拼的），整机约 2.3 k 顶点 / 4 k 三角面。
+  （轮廓挤出 + 回转体，没有一处是方盒子拼的），整机 4 062 顶点 / 7 296 三角面。
 
   两条结构约束，改模型时必须守住：
   1) rviz 的 RobotModel 对每个 link 只取**第一个** visual 的材质，
@@ -468,14 +472,60 @@
     </visual>
   </link>
 
-  <!-- 铲斗油缸：缸筒铰在斗杆上表面耳板 A=(1.55, 0.58)，缸筒长 1.10，
-       barrel+rod = 2.169 = Lmax。 -->
+  <!-- ============ 铲斗四连杆：H-link 三角板 + dogbone ============ -->
+  <!-- URDF 是树、环不能闭合，所以这里把环拆成两条支路：
+         H-link 挂 arm_link 子关节，dogbone 挂 bucket_link 子关节，
+       两个被动关节角由 excavator_sim.cylinders.solve 每帧反解发布，
+       环在运动学上始终闭合。铲斗缸的杆端销（P1）是 H-link 上的点，
+       所以 bucket_cyl 的 pivot 关节挂在 arm_link、平移行程由 P1 决定。
+
+       限位来自 bucket_joint 全行程 4001 帧密采样实测 + 0.02 rad 余量；
+       速度 = bucket 限速 1.8 × 该关节实测最大摆速比（h 1.789 / d 0.836）。
+       改 bucket_joint 限位必须重跑 `python -m excavator_sim.cylinders`。 -->
+  <joint name="h_link_joint" type="revolute">
+    <parent link="arm_link"/>
+    <child link="h_link_link"/>
+    <origin xyz="2.98 0 0.26" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="1.8791" upper="4.5557" effort="0" velocity="3.4"/>
+  </joint>
+  <link name="h_link_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/h_link.obj"/>
+      </geometry>
+      <material name="machine_yellow_dark"/>
+    </visual>
+  </link>
+
+  <joint name="dogbone_joint" type="revolute">
+    <parent link="bucket_link"/>
+    <child link="dogbone_link"/>
+    <origin xyz="-0.34415 0 0.49149" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="1.3944" upper="2.5667" effort="0" velocity="1.6"/>
+  </joint>
+  <link name="dogbone_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://excavator_sim/urdf/meshes/dogbone.obj"/>
+      </geometry>
+      <material name="machine_yellow_dark"/>
+    </visual>
+  </link>
+
+  <!-- 铲斗油缸：缸筒铰在斗杆上表面耳板 A=(1.55, 0.58)，缸筒长 0.95，
+       barrel+rod = 1.94 = Lmax。杆端不直接挂斗，挂 H-link 的 P1。
+       限位与速度由 4001 帧密采样得出（psi ±9.79°、行程 0.889 m），
+       不是沿用上一版直连方案的值。 -->
   <joint name="bucket_cyl_pivot_joint" type="revolute">
     <parent link="arm_link"/>
     <child link="bucket_cyl_link"/>
     <origin xyz="1.55 0 0.58" rpy="0 0 0"/>
     <axis xyz="0 1 0"/>
-    <limit lower="-0.0727" upper="0.3932" effort="0" velocity="0.55"/>
+    <limit lower="-0.1190" upper="0.1909" effort="0" velocity="0.70"/>
   </joint>
   <link name="bucket_cyl_link">
     <visual>
@@ -490,9 +540,9 @@
   <joint name="bucket_cyl_slide_joint" type="prismatic">
     <parent link="bucket_cyl_link"/>
     <child link="bucket_cyl_rod_link"/>
-    <origin xyz="1.10 0 0" rpy="0 0 0"/>
+    <origin xyz="0.95 0 0" rpy="0 0 0"/>
     <axis xyz="1 0 0"/>
-    <limit lower="-1.0549" upper="0.0200" effort="0" velocity="1.18"/>
+    <limit lower="-0.9507" upper="0.0200" effort="0" velocity="1.35"/>
   </joint>
   <link name="bucket_cyl_rod_link">
     <visual>

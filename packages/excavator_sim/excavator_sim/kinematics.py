@@ -24,8 +24,9 @@ from __future__ import annotations
 
 import math
 
+from .cylinders import h_link_state
 from .design import (ARM_LEN, BOOM_LEN, BOOM_PIVOT, BUCKET_A1, BUCKET_CX,
-                     BUCKET_CZ, BUCKET_LUG, BUCKET_R_OUT, HOUSE_Z)
+                     BUCKET_CZ, BUCKET_LUG, BUCKET_R_OUT, H_LINK_PIN, HOUSE_Z)
 
 
 def _ry(x, z, th):
@@ -56,7 +57,8 @@ def fk(angles):
 
     angles 需含 swing_joint / boom_joint / arm_joint / bucket_joint。
     返回 dict：boom_pivot / boom_head / arm_head / bucket_lug /
-    bucket_rim / tooth_tip / arm_back（各为 (x, y, z)）。
+    bucket_rim / tooth_tip / arm_back / h_link_pin / h_link_p1 / dog_pin
+    （各为 (x, y, z)）。后三个是铲斗四连杆的销，由 cylinders 闭式解算。
     """
     sb = angles.get("swing_joint", 0.0)
     tb = angles["boom_joint"]
@@ -83,7 +85,15 @@ def fk(angles):
         bx, bz = bkt_to_boom(x, z)
         return _fwd(bx, bz, tb, px, pz)
 
+    def arm_to_house(x, z):
+        bx, bz = _fwd(x, z, ta, arm_org[0], arm_org[1])
+        return _fwd(bx, bz, tb, px, pz)
+
     arm_back_boom = _fwd(-0.16, 0.0, ta, arm_org[0], arm_org[1])
+
+    # 四连杆的两个销（H-link 的 P1、dogbone 的 P2）由 cylinders 闭式解开，
+    # 保证 fk 和 anim_node 发布的角度是同一组数，不会各算各的。
+    link = h_link_state({"bucket_joint": tk})
 
     pts_house = {
         "boom_pivot": (px, pz),
@@ -93,6 +103,9 @@ def fk(angles):
         "bucket_rim": bkt_to_house(*RIM),
         "tooth_tip": bkt_to_house(*TOOTH_TIP),
         "arm_back": _fwd(arm_back_boom[0], arm_back_boom[1], tb, px, pz),
+        "h_link_pin": arm_to_house(*H_LINK_PIN),
+        "h_link_p1": arm_to_house(*link["P1"]),
+        "dog_pin": arm_to_house(*link["P2"]),
     }
     return {k: to_world(v) for k, v in pts_house.items()}
 

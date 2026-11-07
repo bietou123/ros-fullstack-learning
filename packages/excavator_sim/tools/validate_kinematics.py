@@ -48,7 +48,7 @@ sys.path.insert(0, PKG)
 
 from excavator_sim import cylinders as C              # noqa: E402
 from excavator_sim.design import (                   # noqa: E402
-    ARM_LEN, BOOM_LEN, BOOM_PIVOT, CYLINDERS, HOUSE_Z)
+    ARM_LEN, BOOM_LEN, BOOM_PIVOT, BUCKET_LUG, CYLINDERS, H_LINK_PIN, HOUSE_Z)
 from excavator_sim.motion import (                    # noqa: E402
     CYCLE, STATIC_POSES, lowest_point, sample)
 
@@ -369,7 +369,13 @@ def check_urdf_design(joints):
         "boom_joint": (BOOM_PIVOT, (0.0, 1.0, 0.0)),
         "arm_joint": ((BOOM_LEN, 0.0, 0.0), (0.0, 1.0, 0.0)),
         "bucket_joint": ((ARM_LEN, 0.0, 0.0), (0.0, 1.0, 0.0)),
+        # 四连杆两个被动关节：origin 是刚性销位，必须和 design/cylinders
+        # 用同一组数。差 1 mm 环就闭不上 —— P2 会从 dogbone 端头脱开，
+        # 而运动学仍然"无解报警"，所以这里必须查。
+        "h_link_joint": ((H_LINK_PIN[0], 0.0, H_LINK_PIN[1]), (0.0, 1.0, 0.0)),
+        "dogbone_joint": ((BUCKET_LUG[0], 0.0, BUCKET_LUG[1]), (0.0, 1.0, 0.0)),
     }
+    parents = {"h_link_joint": "arm_link", "dogbone_joint": "bucket_link"}
     for name, (xyz, axis) in want.items():
         j = joints.get(name)
         if j is None:
@@ -382,6 +388,9 @@ def check_urdf_design(joints):
             if abs(j["axis"][i] - axis[i]) > 1e-9:
                 report("URDF", False, "%s axis[%d]=%.1f ≠ %.1f"
                        % (name, i, j["axis"][i], axis[i]))
+        if name in parents and j["parent"] != parents[name]:
+            report("URDF", False, "%s parent=%s ≠ %s"
+                   % (name, j["parent"], parents[name]))
         lo, hi, vel = C.LIMITS[name]
         if j["limit"] is None:
             report("URDF", False, "%s 缺 <limit>" % name)
@@ -487,8 +496,8 @@ def check_urdf_design(joints):
                 report("URDF", False, "%s_rod.obj 杆头 x=%.4f 越界（应在 "
                        "rod %.4f..%.4f）" % (name, max(xs), cfg["rod"],
                                              cfg["rod"] + 0.12))
-    report("URDF", True, "主动关节原点/轴/限位、6 个油缸关节原点与限位、"
-                         "缸筒/杆 OBJ 跨度 全部与 design.py 一致")
+    report("URDF", True, "6 个主/被动关节原点/轴/限位/parent、6 个油缸关节"
+                         "原点与限位、缸筒/杆 OBJ 跨度 全部与 design.py 一致")
 
 
 def check_motion(joints, samples, quiet):
