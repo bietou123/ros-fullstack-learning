@@ -1055,6 +1055,7 @@ def gen_arm() -> Mesh:
 BUCKET_CX, BUCKET_CZ = D.BUCKET_CX, D.BUCKET_CZ
 BUCKET_R_OUT, BUCKET_R_IN = D.BUCKET_R_OUT, D.BUCKET_R_IN
 BUCKET_A0, BUCKET_A1 = D.BUCKET_A0, D.BUCKET_A1
+BUCKET_A_KNEE = D.BUCKET_A_KNEE
 BUCKET_LUG = D.BUCKET_LUG
 BUCKET_HALF_W = D.BUCKET_HALF_W
 BUCKET_TEETH_Y = D.BUCKET_TEETH_Y
@@ -1065,6 +1066,36 @@ BUCKET_TOP_PLATE_LEN = 0.30      # 顶板从斗背顶端朝销轴方向伸出的
 def _bk_pt(r, a):
     """斗腔圆弧上的点（bucket 局部 xz）。"""
     return (BUCKET_CX + r * math.cos(a), BUCKET_CZ + r * math.sin(a))
+
+
+def _bk_chain(r, a_from, a_to, n=24):
+    """斗壳轮廓点列：A_KNEE…A1 之间的角度走直线斗底板，其余走圆弧。
+
+    路径方向由 a_from → a_to 决定（外轮廓 A0→A1 递减、内轮廓 A1→A0 递增），
+    但**哪一段是直线只看角度落在哪个区间**，与遍历方向无关。上一版按
+    "a_from → knee 走弧、knee → a_to 走直线"写，内轮廓就反了：直线段
+    画到了 A1→knee 上，那段内弧 R=0.50 大于外弦到圆心的 0.482，内弧
+    穿出外轮廓，端盖多边形自交，耳切切漏两块面。
+
+    为什么要有折：186° 纯圆弧画出来的侧板是一个圆饼，正交平光下法线从
+    +z 一路扫到 −x，没有一条硬边，3/4 视读成深色圆筒。折成弧+直线之后
+    折点处有一条 41° 的硬棱，斗底板又是一整片受同一个法线的平面，
+    侧影才读成 D 形。
+    """
+    knee = BUCKET_A_KNEE
+    lo, hi = min(BUCKET_A1, knee), max(BUCKET_A1, knee)
+
+    def _floor(a):        # 落在直线斗底板的角度区间
+        return lo - 1e-9 <= a <= hi + 1e-9
+
+    here, there = _floor(a_from), _floor(a_to)
+    if here and there:        # 整段都在斗底板上
+        return [_bk_pt(r, a_from), _bk_pt(r, a_to)]
+    if here:                  # 起点在斗底板：先直着到折点，再沿弧走（内轮廓方向）
+        return [_bk_pt(r, a_from)] + arc_pts(BUCKET_CX, BUCKET_CZ, r, knee, a_to, n - 1)
+    if there:                 # 终点在斗底板：先沿弧到折点，再直着到底（外轮廓方向）
+        return arc_pts(BUCKET_CX, BUCKET_CZ, r, a_from, knee, n - 1) + [_bk_pt(r, a_to)]
+    return arc_pts(BUCKET_CX, BUCKET_CZ, r, a_from, a_to, n)     # 整段都在弧上
 
 
 def bucket_top_plate(length=BUCKET_TOP_PLATE_LEN):
@@ -1112,8 +1143,8 @@ def gen_bucket() -> Mesh:
     # 收在 |y| < 0.28 里，所以只挖中央这一段，两侧斗宽照旧。
     LINK_GAP_HALF_W = 0.28
     LINK_GAP_ANG = math.radians(28)          # 148° → 176°
-    outer = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 24)
-    inner = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_IN, BUCKET_A1, BUCKET_A0, 24)
+    outer = _bk_chain(BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 24)
+    inner = _bk_chain(BUCKET_R_IN, BUCKET_A1, BUCKET_A0, 24)
     for sy in (-1, 1):
         y0, y1 = sorted((sy * LINK_GAP_HALF_W, sy * BUCKET_HALF_W))
         m.extrude(outer + inner, y0, y1)
@@ -1149,8 +1180,8 @@ def gen_bucket() -> Mesh:
               -0.62, 0.62)
     # 中央段比两侧各宽 4 mm，避免两个端盖共面 z-fighting（重叠段全在实体内部）
     a0c = BUCKET_A0 + LINK_GAP_ANG
-    outer_c = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, a0c, BUCKET_A1, 14)
-    inner_c = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_IN, BUCKET_A1, a0c, 14)
+    outer_c = _bk_chain(BUCKET_R_OUT, a0c, BUCKET_A1, 14)
+    inner_c = _bk_chain(BUCKET_R_IN, BUCKET_A1, a0c, 14)
     m.extrude(outer_c + inner_c, -LINK_GAP_HALF_W - 0.004,
               LINK_GAP_HALF_W + 0.004)
     m.extrude(bucket_top_plate(0.12), -LINK_GAP_HALF_W - 0.004,
@@ -1181,7 +1212,7 @@ def gen_bucket_side() -> Mesh:
     侧板上缘和顶板外沿是一条线，不会在顶板前面留一段"断掉的边"。
     """
     m = Mesh("bucket_side")
-    outer = arc_pts(BUCKET_CX, BUCKET_CZ, BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 18)
+    outer = _bk_chain(BUCKET_R_OUT, BUCKET_A0, BUCKET_A1, 18)
     prof = outer + [bucket_top_plate()[3]]        # 最后一点 = 顶板前缘外点
     # 外缘倒角：最外面 2 cm 收进 4.5%，侧视里就多出一圈硬边线。
     # 整块侧板在正交平光下是同一片纯色平面，不收边时读成一个圆盘；
