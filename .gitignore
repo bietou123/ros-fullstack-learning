@@ -31,4 +31,5 @@ release/
 apps/desktop/smoke*/
 apps/desktop/smoke-*.log
 apps/desktop/smoke-*.err
+test-artifacts/
 *.tsbuildinfo
